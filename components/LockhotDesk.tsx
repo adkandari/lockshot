@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Locale, SlideData, Project, iTunesLookupResult } from "@/lib/types";
-import { HABIT_APP } from "@/lib/sampleData";
+import { Locale, SlideData, Project, TemplateId } from "@/lib/types";
 import { exportZip } from "@/lib/export";
 import { registerWebMCPTools, getWebMCPState } from "@/lib/webmcp";
 import {
@@ -11,8 +10,8 @@ import {
   loadCurrentProjectId,
   saveCurrentProjectId,
   createProject,
-  parseAppStoreUrl,
 } from "@/lib/storage";
+import { saveImage } from "@/lib/imageStorage";
 import { measureOverflow } from "@/lib/overflow";
 import SlideCard from "./SlideCard";
 
@@ -31,17 +30,25 @@ const COMMON_LOCALES = [
   { code: "ru", name: "Русский", flag: "🇷🇺" },
 ];
 
+const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
+  { id: "full_bleed_caption_bottom", name: "Full Bleed", description: "Screenshot fills frame, caption at bottom" },
+  { id: "caption_top", name: "Caption Top", description: "Caption bar at top, screenshot below" },
+  { id: "framed_on_gradient", name: "Framed", description: "Phone frame on gradient background" },
+  { id: "gradient_only", name: "Gradient", description: "Gradient background only" },
+];
+
 export default function LockhotDesk() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [currentLocale, setCurrentLocale] = useState<Locale>("en");
   const [locales, setLocales] = useState<Locale[]>(["en"]);
   const [webMcpState, setWebMcpState] = useState({ enabled: false, error: null as string | null });
-  const [importUrl, setImportUrl] = useState("");
-  const [importing, setImporting] = useState(false);
   const [showAddLocale, setShowAddLocale] = useState(false);
   const [newLocaleCode, setNewLocaleCode] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [showEmptyState, setShowEmptyState] = useState(true);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const slidesRef = useRef(slides);
   const currentLocaleRef = useRef(currentLocale);
   const projectRef = useRef(currentProject);
@@ -73,11 +80,8 @@ export default function LockhotDesk() {
         setSlides(project.slides);
         setLocales(project.locales);
         setCurrentLocale(project.locales[0] || "en");
-      } else {
-        setSlides(HABIT_APP.slides);
+        setShowEmptyState(false);
       }
-    } else {
-      setSlides(HABIT_APP.slides);
     }
   }, []);
 
@@ -87,69 +91,59 @@ export default function LockhotDesk() {
     }
   }, [currentProject]);
 
-  const handleImportAppStore = async (url: string): Promise<{ success: boolean; error?: string; project?: Project }> => {
-    const appId = parseAppStoreUrl(url);
-    if (!appId) {
-      return { success: false, error: 'Invalid App Store URL format' };
-    }
+  const handleFilesUpload = async (files: File[]) => {
+    const imageFiles = Array.from(files)
+      .filter(f => f.type.startsWith('image/'))
+      .slice(0, 5);
 
-    setImporting(true);
-    try {
-      const response = await fetch(`/api/appstore?id=${appId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch app data');
-      }
+    if (imageFiles.length === 0) return;
 
-      const data: iTunesLookupResult = await response.json();
-      
-      if (data.resultCount === 0 || !data.results[0]) {
-        return { success: false, error: 'App not found' };
-      }
+    const newSlides = await Promise.all(
+      imageFiles.map(async (file, index) => {
+        const imageKey = `img-${Date.now()}-${index}`;
+        await saveImage(imageKey, file);
 
-      const appData = data.results[0];
-      const screenshotUrls = appData.screenshotUrls.slice(0, 5);
+        return {
+          id: index + 1,
+          templateId: "full_bleed_caption_bottom" as TemplateId,
+          backgroundImage: '',
+          imageKey,
+          overlays: { en: { headline: '', subhead: '' } },
+          locked: false,
+          comments: [],
+          overflow: { en: false },
+        };
+      })
+    );
 
-      const newSlides: SlideData[] = await Promise.all(
-        screenshotUrls.map(async (screenshotUrl, index) => {
-          const largeImageUrl = screenshotUrl.replace(/\/[^/]+\.(jpg|jpeg|png)$/, '/0x0w.jpg');
-          const proxyUrl = `/api/image?url=${encodeURIComponent(largeImageUrl)}`;
-          
-          const overlay = {
-            headline: '',
-            subhead: '',
-          };
+    const project = createProject('My App', '', newSlides, ['en']);
+    setCurrentProject(project);
+    setSlides(newSlides);
+    setLocales(['en']);
+    setCurrentLocale('en');
+    saveProject(project);
+    saveCurrentProjectId(project.id);
+    setShowEmptyState(false);
+  };
 
-          return {
-            id: index + 1,
-            templateId: index % 2 === 0 ? "gradient" as const : "framed" as const,
-            backgroundImage: proxyUrl,
-            overlays: { en: overlay },
-            locked: false,
-            comments: [],
-            overflow: { en: false },
-          };
-        })
-      );
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFilesUpload(Array.from(e.dataTransfer.files));
+  };
 
-      const project = createProject(appData.trackName, url, newSlides, ['en']);
-      
-      setCurrentProject(project);
-      setSlides(project.slides);
-      setLocales(project.locales);
-      setCurrentLocale('en');
-      saveProject(project);
-      saveCurrentProjectId(project.id);
-      setImportUrl('');
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-      return { success: true, project };
-    } catch (error) {
-      console.error('Import error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Import failed' 
-      };
-    } finally {
-      setImporting(false);
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFilesUpload(Array.from(e.target.files));
     }
   };
 
@@ -190,6 +184,22 @@ export default function LockhotDesk() {
     setNewLocaleCode('');
   };
 
+  const handleSetTemplate = (template: TemplateId, slideId?: number) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (slideId && s.id !== slideId) return s;
+        if (!slideId && s.locked) return s;
+        return { ...s, templateId: template };
+      });
+      
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
   useEffect(() => {
     if (registrationStarted) {
       setWebMcpState(getWebMCPState());
@@ -219,7 +229,7 @@ export default function LockhotDesk() {
       (locale) => {
         handleAddLocale(locale);
       },
-      handleImportAppStore,
+      handleSetTemplate,
       (slides, locale, projectName) => exportZip(slides, locale, projectName)
     ).then(() => {
       setWebMcpState(getWebMCPState());
@@ -242,24 +252,22 @@ export default function LockhotDesk() {
   };
 
   const handleFileUpload = async (slideId: number, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setSlides(prev => {
-        const updated = prev.map(s => {
-          if (s.id === slideId) {
-            return { ...s, backgroundImage: dataUrl };
-          }
-          return s;
-        });
-        if (currentProject) {
-          const updatedProject = { ...currentProject, slides: updated };
-          setCurrentProject(updatedProject);
+    const imageKey = `img-${Date.now()}-${slideId}`;
+    await saveImage(imageKey, file);
+    
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return { ...s, imageKey, backgroundImage: '' };
         }
-        return updated;
+        return s;
       });
-    };
-    reader.readAsDataURL(file);
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
   };
 
   const statusText = webMcpState.error 
@@ -268,7 +276,63 @@ export default function LockhotDesk() {
       ? "WebMCP Active" 
       : "WebMCP Not Detected";
 
-  const isEmptyState = !currentProject;
+  if (showEmptyState) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Lockshot</h1>
+            <p className="text-gray-600">App Store Screenshot Localization Desk</p>
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm">
+              <span
+                className={`inline-block w-3 h-3 rounded-full ${
+                  webMcpState.enabled ? "bg-green-500" : webMcpState.error ? "bg-red-500" : "bg-gray-300"
+                }`}
+              />
+              <span className={`text-gray-600 ${webMcpState.error ? "text-red-600" : ""}`}>
+                {statusText}
+              </span>
+            </div>
+          </div>
+
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-4 border-dashed rounded-xl p-16 text-center cursor-pointer transition-all ${
+              isDragging
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+            }`}
+          >
+            <div className="text-6xl mb-4">📸</div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Drop Screenshots Here
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Or click to select up to 5 PNG/JPG files
+            </p>
+            <p className="text-sm text-gray-500">
+              Raw simulator or device screenshots work best
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileInput}
+              className="hidden"
+            />
+          </div>
+
+          <div className="mt-6 text-center text-sm text-gray-500">
+            <p>After uploading, pick a template and let ChatGPT write your copy in any locale</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -294,41 +358,26 @@ export default function LockhotDesk() {
           </div>
         </div>
 
-        {isEmptyState && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-900">
-              👋 <strong>Demo Mode:</strong> You're viewing the sample Habit app. Import a real App Store app below to get started.
-            </p>
+        {currentProject && (
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">{currentProject.name}</h2>
           </div>
         )}
 
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={importUrl}
-              onChange={(e) => setImportUrl(e.target.value)}
-              placeholder="Paste App Store URL (e.g., https://apps.apple.com/us/app/example/id123456789)"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={importing}
-            />
-            <button
-              onClick={() => handleImportAppStore(importUrl)}
-              disabled={importing || !importUrl}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {importing ? 'Importing...' : 'Import'}
-            </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-sm font-medium text-gray-700">Template:</label>
+            {TEMPLATES.map(template => (
+              <button
+                key={template.id}
+                onClick={() => handleSetTemplate(template.id)}
+                className="px-3 py-1 text-sm rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                title={template.description}
+              >
+                {template.name}
+              </button>
+            ))}
           </div>
-
-          {currentProject && (
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{currentProject.name}</h2>
-                <p className="text-sm text-gray-500">{currentProject.storeUrl}</p>
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
