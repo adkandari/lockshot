@@ -145,7 +145,7 @@ export default function LockhotHero() {
     for (let i = 0; i < 5; i++) {
       const angle = (i - 2) * (arcSpan / 4);
       
-      // Phone bezel (frame)
+      // Phone bezel (frame) with rounded edges
       const bezelGeometry = new THREE.BoxGeometry(
         phoneWidth + 0.1,
         phoneHeight + 0.1,
@@ -153,10 +153,12 @@ export default function LockhotHero() {
       );
       const bezelMaterial = new THREE.MeshStandardMaterial({
         color: 0x1a1a1a,
-        metalness: 0.8,
-        roughness: 0.2,
+        metalness: 0.9,
+        roughness: 0.1,
       });
       const bezel = new THREE.Mesh(bezelGeometry, bezelMaterial);
+      bezel.castShadow = true;
+      bezel.receiveShadow = true;
 
       // Screen (inside the bezel)
       const screenGeometry = new THREE.BoxGeometry(
@@ -165,13 +167,47 @@ export default function LockhotHero() {
         phoneDepth - 0.05
       );
       const screenMaterial = new THREE.MeshStandardMaterial({
-        color: i === 2 ? 0x6666ff : 0x2a2a3a, // Center phone brighter
-        emissive: i === 2 ? 0x3333ff : 0x1a1a2a,
-        emissiveIntensity: i === 2 ? 0.3 : 0.1,
+        color: i === 2 ? 0x4444aa : 0x2a2a3a,
+        emissive: i === 2 ? 0x3366ff : 0x1a1a2a,
+        emissiveIntensity: i === 2 ? 0.4 : 0.1,
       });
       const screen = new THREE.Mesh(screenGeometry, screenMaterial);
       screen.position.z = 0.03;
       bezel.add(screen);
+
+      // Add glow effect for center phone
+      if (i === 2) {
+        const glowGeometry = new THREE.BoxGeometry(
+          phoneWidth + 0.3,
+          phoneHeight + 0.3,
+          phoneDepth + 0.2
+        );
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0x3366ff,
+          transparent: true,
+          opacity: 0.15,
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        bezel.add(glow);
+      }
+
+      // Add overflow indicator for phone 2 (index 1)
+      if (i === 1) {
+        const overflowGeometry = new THREE.BoxGeometry(
+          phoneWidth - 0.1,
+          phoneHeight - 0.2,
+          phoneDepth + 0.05
+        );
+        const overflowMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff0000,
+          transparent: true,
+          opacity: 0,
+        });
+        const overflowIndicator = new THREE.Mesh(overflowGeometry, overflowMaterial);
+        overflowIndicator.position.z = 0.04;
+        overflowIndicator.name = "overflow";
+        screen.add(overflowIndicator);
+      }
 
       // Position in arc
       const x = Math.sin(angle) * arcRadius;
@@ -181,8 +217,8 @@ export default function LockhotHero() {
 
       // Center phone comes forward
       if (i === 2) {
-        bezel.position.z += 1;
-        bezel.scale.set(1.1, 1.1, 1.1);
+        bezel.position.z += 1.5;
+        bezel.scale.set(1.15, 1.15, 1.15);
       }
 
       scene.add(bezel);
@@ -215,15 +251,36 @@ export default function LockhotHero() {
         setCurrentPhase("morph");
       } else if (elapsed < 11000) {
         setCurrentPhase("overflow");
+        
+        // Pulse the overflow indicator on phone 2 (index 1)
+        const phone2 = phones[1];
+        if (phone2) {
+          phone2.traverse((child) => {
+            if (child.name === "overflow" && child instanceof THREE.Mesh) {
+              const material = child.material as THREE.MeshBasicMaterial;
+              material.opacity = 0.3 + Math.sin(elapsed / 200) * 0.2;
+            }
+          });
+        }
       } else {
         setCurrentPhase("lock");
         setShowHUD(true);
       }
 
-      // Reset HUD at loop start
+      // Reset HUD and overflow at loop start
       if (elapsed < 100) {
         setShowHUD(false);
         setIsLocked(false);
+        
+        // Reset overflow opacity
+        phones.forEach((phone) => {
+          phone.traverse((child) => {
+            if (child.name === "overflow" && child instanceof THREE.Mesh) {
+              const material = child.material as THREE.MeshBasicMaterial;
+              material.opacity = 0;
+            }
+          });
+        });
       }
 
       // Gentle idle motion
@@ -318,12 +375,30 @@ export default function LockhotHero() {
       <div className="absolute inset-0 pointer-events-none">
         {/* Text morphing overlay - center phone */}
         {currentPhase === "morph" && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-            <div className="text-white text-4xl font-bold mb-2 animate-pulse">
-              EN → DE
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center space-y-6">
+            <div className="relative">
+              <div className="text-blue-400 text-sm font-mono mb-2 tracking-widest">
+                LOCALE TRANSITION
+              </div>
+              <div className="text-white text-5xl font-bold relative">
+                <span className="inline-block animate-[fade-out_2s_ease-in-out] absolute">
+                  {PHONE_DATA[2].enText.headline}
+                </span>
+                <span className="inline-block animate-[fade-in_2s_ease-in-out_1s] opacity-0 text-blue-300">
+                  {PHONE_DATA[2].deText.headline}
+                </span>
+              </div>
             </div>
-            <div className="text-gray-400 text-lg">
-              {PHONE_DATA[2].enText.headline} → {PHONE_DATA[2].deText.headline}
+            <div className="flex items-center justify-center gap-3 text-2xl">
+              <span className="px-4 py-2 bg-gray-800/80 border-2 border-blue-500 rounded-lg font-bold animate-pulse">
+                EN
+              </span>
+              <svg className="w-8 h-8 text-blue-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+              <span className="px-4 py-2 bg-blue-600/80 border-2 border-blue-400 rounded-lg font-bold animate-pulse">
+                DE
+              </span>
             </div>
           </div>
         )}
