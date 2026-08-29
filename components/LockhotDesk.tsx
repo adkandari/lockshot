@@ -111,13 +111,12 @@ export default function LockhotDesk() {
 
       const newSlides: SlideData[] = await Promise.all(
         screenshotUrls.map(async (screenshotUrl, index) => {
-          const proxyUrl = `/api/image?url=${encodeURIComponent(screenshotUrl)}`;
+          const largeImageUrl = screenshotUrl.replace(/\/[^/]+\.(jpg|jpeg|png)$/, '/0x0w.jpg');
+          const proxyUrl = `/api/image?url=${encodeURIComponent(largeImageUrl)}`;
           
           const overlay = {
-            headline: index === 0 ? appData.trackName : `Feature ${index + 1}`,
-            subhead: index === 0 
-              ? (appData.description?.split('\n')[0]?.substring(0, 50) || 'Download now')
-              : 'Discover more',
+            headline: '',
+            subhead: '',
           };
 
           return {
@@ -127,7 +126,7 @@ export default function LockhotDesk() {
             overlays: { en: overlay },
             locked: false,
             comments: [],
-            overflow: { en: measureOverflow(overlay) },
+            overflow: { en: false },
           };
         })
       );

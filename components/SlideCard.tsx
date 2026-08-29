@@ -20,6 +20,7 @@ export default function SlideCard({
   const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
   const isOverflowing = slide.overflow[currentLocale] || false;
   const isLocked = slide.locked;
+  const hasOverlay = overlay.headline || overlay.subhead;
 
   const handleFileClick = () => {
     fileInputRef.current?.click();
@@ -37,26 +38,26 @@ export default function SlideCard({
       <div className="relative group">
         <div className="aspect-[1320/2868] bg-gradient-to-br from-purple-500 to-pink-500 relative overflow-hidden">
           <img
-            src={slide.backgroundImage.startsWith('http') || slide.backgroundImage.startsWith('data:') 
-              ? slide.backgroundImage 
-              : slide.backgroundImage.replace(".png", ".svg")}
+            src={slide.backgroundImage}
             alt={`Slide ${slide.id}`}
             className="w-full h-full object-cover"
             crossOrigin="anonymous"
           />
           
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-            <div
-              className={`bg-white/90 backdrop-blur-sm rounded-xl p-6 max-w-[85%] ${
-                isOverflowing ? "ring-4 ring-red-500" : ""
-              }`}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {overlay.headline}
-              </h2>
-              <p className="text-lg text-gray-700">{overlay.subhead}</p>
+          {hasOverlay && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm px-6 py-4">
+              {overlay.headline && (
+                <h2 className={`text-lg font-bold text-white mb-1 ${isOverflowing ? 'text-red-300' : ''}`}>
+                  {overlay.headline}
+                </h2>
+              )}
+              {overlay.subhead && (
+                <p className={`text-sm text-gray-200 ${isOverflowing ? 'text-red-200' : ''}`}>
+                  {overlay.subhead}
+                </p>
+              )}
             </div>
-          </div>
+          )}
 
           {isOverflowing && (
             <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">

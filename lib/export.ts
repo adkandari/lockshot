@@ -21,61 +21,44 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
 
-    const gradient = ctx.createLinearGradient(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
-    if (slide.templateId === "gradient") {
-      const gradients = [
-        ["#667eea", "#764ba2"],
-        ["#f093fb", "#f5576c"],
-        ["#4facfe", "#00f2fe"],
-        ["#43e97b", "#38f9d7"],
-        ["#fa709a", "#fee140"],
-      ];
-      const colors = gradients[slide.id - 1] || gradients[0];
-      gradient.addColorStop(0, colors[0]);
-      gradient.addColorStop(1, colors[1]);
-    } else {
-      gradient.addColorStop(0, "#8b5cf6");
-      gradient.addColorStop(1, "#ec4899");
-    }
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
-
-    if (slide.templateId === "framed") {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.roundRect(110, 434, 1100, 2000, 60);
-      ctx.fill();
+    if (slide.backgroundImage) {
+      const img = await loadImage(slide.backgroundImage);
+      ctx.drawImage(img, 0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
     }
 
     const overlay = slide.overlays[locale];
     
     if (!overlay) {
-      console.warn(`No overlay for locale ${locale} on slide ${slide.id}, skipping`);
-      continue;
+      console.warn(`No overlay for locale ${locale} on slide ${slide.id}, skipping overlay`);
+    } else if (overlay.headline || overlay.subhead) {
+      const overlayHeight = 300;
+      const overlayY = EXPORT_HEIGHT - overlayHeight;
+      
+      ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.fillRect(0, overlayY, EXPORT_WIDTH, overlayHeight);
+
+      const padding = 60;
+      let currentY = overlayY + padding + 40;
+
+      if (overlay.headline) {
+        const headlineFontSize = 80;
+        ctx.font = `bold ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        wrapText(ctx, overlay.headline, padding, currentY, EXPORT_WIDTH - padding * 2, headlineFontSize * 1.2);
+        currentY += headlineFontSize * 1.2 + 20;
+      }
+
+      if (overlay.subhead) {
+        const subheadFontSize = 56;
+        ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        ctx.fillStyle = "#e5e7eb";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        wrapText(ctx, overlay.subhead, padding, currentY, EXPORT_WIDTH - padding * 2, subheadFontSize * 1.2);
+      }
     }
-
-    const boxWidth = EXPORT_WIDTH * 0.85;
-    const boxHeight = EXPORT_HEIGHT * 0.3;
-    const boxX = (EXPORT_WIDTH - boxWidth) / 2;
-    const boxY = (EXPORT_HEIGHT - boxHeight) / 2;
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 40);
-    ctx.fill();
-
-    ctx.fillStyle = "#111827";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    const headlineFontSize = 80;
-    ctx.font = `bold ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    const headlineY = boxY + boxHeight * 0.4;
-    wrapText(ctx, overlay.headline, EXPORT_WIDTH / 2, headlineY, boxWidth * 0.9, headlineFontSize * 1.2);
-
-    const subheadFontSize = 56;
-    ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    ctx.fillStyle = "#374151";
-    const subheadY = boxY + boxHeight * 0.7;
-    wrapText(ctx, overlay.subhead, EXPORT_WIDTH / 2, subheadY, boxWidth * 0.9, subheadFontSize * 1.2);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -102,6 +85,16 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
   URL.revokeObjectURL(url);
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
+}
+
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -110,6 +103,8 @@ function wrapText(
   maxWidth: number,
   lineHeight: number
 ) {
+  if (!text) return;
+  
   const words = text.split(" ");
   let line = "";
   let currentY = y;
