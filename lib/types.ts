@@ -1,5 +1,11 @@
 export type Locale = string;
 
+export type TemplateId = 
+  | "full_bleed_caption_bottom"
+  | "caption_top"
+  | "framed_on_gradient"
+  | "gradient_only";
+
 export interface SlideOverlay {
   headline: string;
   subhead: string;
@@ -7,8 +13,9 @@ export interface SlideOverlay {
 
 export interface SlideData {
   id: number;
-  templateId: "gradient" | "framed";
+  templateId: TemplateId;
   backgroundImage: string;
+  imageKey?: string;
   overlays: Record<Locale, SlideOverlay>;
   locked: boolean;
   comments: string[];

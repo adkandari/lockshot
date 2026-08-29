@@ -5,7 +5,7 @@ export const HABIT_APP: AppData = {
   slides: [
     {
       id: 1,
-      templateId: "gradient",
+      templateId: "full_bleed_caption_bottom",
       backgroundImage: "/assets/habit-1.png",
       overlays: {
         en: {
@@ -21,7 +21,7 @@ export const HABIT_APP: AppData = {
     },
     {
       id: 2,
-      templateId: "framed",
+      templateId: "caption_top",
       backgroundImage: "/assets/habit-2.png",
       overlays: {
         en: {
@@ -37,7 +37,7 @@ export const HABIT_APP: AppData = {
     },
     {
       id: 3,
-      templateId: "gradient",
+      templateId: "framed_on_gradient",
       backgroundImage: "/assets/habit-3.png",
       overlays: {
         en: {
@@ -53,7 +53,7 @@ export const HABIT_APP: AppData = {
     },
     {
       id: 4,
-      templateId: "framed",
+      templateId: "full_bleed_caption_bottom",
       backgroundImage: "/assets/habit-4.png",
       overlays: {
         en: {
@@ -69,7 +69,7 @@ export const HABIT_APP: AppData = {
     },
     {
       id: 5,
-      templateId: "gradient",
+      templateId: "gradient_only",
       backgroundImage: "/assets/habit-5.png",
       overlays: {
         en: {

@@ -1,6 +1,5 @@
 import { initializeWebMCPPolyfill } from '@mcp-b/webmcp-polyfill';
-import type { Locale, SlideData, Project, iTunesLookupResult } from './types';
-import { parseAppStoreUrl } from './storage';
+import type { Locale, SlideData, Project, TemplateId } from './types';
 import { measureOverflow } from './overflow';
 
 declare global {
@@ -56,7 +55,7 @@ export async function registerWebMCPTools(
   setSlides: (updater: (prev: SlideData[]) => SlideData[]) => void,
   setCurrentLocale: (locale: Locale) => void,
   addLocale: (locale: Locale) => void,
-  importAppStore: (url: string) => Promise<{ success: boolean; error?: string; project?: Project }>,
+  setTemplate: (template: TemplateId, slideId?: number) => void,
   exportZip: (slides: SlideData[], locale: Locale, projectName: string) => Promise<void>
 ) {
   if (state.registered) {
@@ -110,47 +109,6 @@ export async function registerWebMCPTools(
       },
     },
     {
-      name: "import_app_store",
-      description: "Import an App Store app by URL, creating a new project with up to 5 screenshots and seeding English overlays from app metadata",
-      inputSchema: {
-        type: "object" as const,
-        properties: {
-          url: {
-            type: "string",
-            description: "App Store URL (e.g., https://apps.apple.com/us/app/example/id123456789)",
-          },
-        },
-        required: ["url"],
-        additionalProperties: false,
-      },
-      execute: async (params: Record<string, unknown>) => {
-        const url = params.url as string;
-        
-        try {
-          const result = await importAppStore(url);
-          
-          if (!result.success) {
-            return { success: false, error: result.error };
-          }
-          
-          return {
-            success: true,
-            project: {
-              name: result.project!.name,
-              storeUrl: result.project!.storeUrl,
-              slideCount: result.project!.slides.length,
-            },
-            message: `Imported ${result.project!.name} with ${result.project!.slides.length} screenshots`,
-          };
-        } catch (error) {
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Import failed',
-          };
-        }
-      },
-    },
-    {
       name: "add_locale",
       description: "Add a new locale to the project. Use BCP 47 codes (e.g., en, de, es, ja, fr, pt-BR, zh-Hans). ChatGPT should then translate via set_overlay.",
       inputSchema: {
@@ -196,46 +154,57 @@ export async function registerWebMCPTools(
       },
     },
     {
-      name: "set_slide_image",
-      description: "Set a slide's background image from a URL (ChatGPT-generated image or proxied App Store screenshot)",
+      name: "set_template",
+      description: "Set the template for all unlocked slides or a specific slide. Templates: full_bleed_caption_bottom (default, screenshot fills frame with caption at bottom), caption_top (caption bar at top), framed_on_gradient (phone frame on gradient), gradient_only (gradient background only)",
       inputSchema: {
         type: "object" as const,
         properties: {
+          template: {
+            type: "string",
+            enum: ["full_bleed_caption_bottom", "caption_top", "framed_on_gradient", "gradient_only"],
+            description: "Template ID to apply",
+          },
           slide: {
             type: "number",
-            description: "Slide ID (1-5)",
-          },
-          url: {
-            type: "string",
-            description: "Image URL (can be ChatGPT-generated or any web URL)",
+            description: "Optional slide ID (1-5). If omitted, applies to all unlocked slides.",
           },
         },
-        required: ["slide", "url"],
+        required: ["template"],
         additionalProperties: false,
       },
       execute: async (params: Record<string, unknown>) => {
-        const slideId = params.slide as number;
-        const url = params.url as string;
+        const template = params.template as TemplateId;
+        const slideId = params.slide as number | undefined;
         
         const currentSlides = getSlidesRef();
-        const slide = currentSlides.find(s => s.id === slideId);
         
-        if (!slide) {
-          return { success: false, error: "Slide not found" };
+        if (slideId) {
+          const slide = currentSlides.find(s => s.id === slideId);
+          if (!slide) {
+            return { success: false, error: "Slide not found" };
+          }
+          if (slide.locked) {
+            return {
+              success: false,
+              error: `Slide ${slideId} is locked`,
+              locked: true,
+            };
+          }
         }
         
-        setSlides(prev => prev.map(s => {
-          if (s.id === slideId) {
-            return { ...s, backgroundImage: url };
-          }
-          return s;
-        }));
+        setTemplate(template, slideId);
+        
+        const affectedSlides = slideId 
+          ? [slideId]
+          : currentSlides.filter(s => !s.locked).map(s => s.id);
         
         return {
           success: true,
-          slideId,
-          newImageUrl: url,
-          message: `Updated slide ${slideId} background image`,
+          template,
+          affectedSlides,
+          message: slideId 
+            ? `Set template ${template} on slide ${slideId}`
+            : `Set template ${template} on ${affectedSlides.length} unlocked slide(s)`,
         };
       },
     },
