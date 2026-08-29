@@ -300,10 +300,7 @@ export default function LockhotBookshelfHero() {
   }, [prefersReducedMotion]);
 
   const handleContinue = () => {
-    const deskElement = document.getElementById("lockshot-desk");
-    if (deskElement) {
-      deskElement.scrollIntoView({ behavior: "smooth" });
-    }
+    window.location.href = '/';
   };
 
   if (prefersReducedMotion) {
@@ -373,7 +370,7 @@ export default function LockhotBookshelfHero() {
             onClick={handleContinue}
             className="px-8 py-4 bg-[#c87046] hover:bg-[#d88056] text-white rounded-lg font-medium transition-colors shadow-lg"
           >
-            Open Localization Desk →
+            Open Desk →
           </button>
         </div>
 

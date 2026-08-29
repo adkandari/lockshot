@@ -1,8 +1,23 @@
-# Lockshot 3D Bookshelf Hero
+# Lockshot 3D Bookshelf Landing Page
 
 ## Overview
 
-The bookshelf hero is a Three.js 3D scene that showcases Lockshot's four screenshot templates as phone-shaped volumes standing on a dark walnut bookshelf. Inspired by ThreeUI's Complete Shelf (Working Volumes), this implementation transforms the book metaphor into a template showcase.
+The bookshelf landing page (`/landing`) is a Three.js 3D scene that showcases Lockshot's four screenshot templates as phone-shaped volumes standing on a dark walnut bookshelf. Inspired by ThreeUI's Complete Shelf (Working Volumes), this implementation transforms the book metaphor into a template showcase.
+
+**Important**: The 3D shelf is on a separate `/landing` page to avoid slowing down the main desk page (`/`). Navigation between them uses simple text links.
+
+## Architecture
+
+### Page Structure
+- **`/`** - Fast desk-only page with WebMCP tools (no WebGL)
+- **`/landing`** - 3D bookshelf showcase (full WebGL scene)
+- **Navigation**: Text links for Desk ↔ Landing
+
+This separation ensures:
+- Main desk loads instantly with no WebGL overhead
+- WebMCP tools remain responsive on `/`
+- 3D experience is isolated for performance
+- Users can preview templates before opening the desk
 
 ## Design Philosophy
 
@@ -89,11 +104,11 @@ Static fallback for `prefers-reduced-motion`:
 ## WebMCP Compatibility
 
 ### Hard Constraints (All Met)
-✅ Hero mounted ABOVE the desk  
+✅ Shelf on separate `/landing` page - no WebGL on desk page  
 ✅ Desk component completely unchanged  
-✅ No iframe or sandboxing  
-✅ WebMCP tools stay on top-level document  
-✅ All 8 tools remain accessible:
+✅ No WebGL mounted on `/` (not even hidden)  
+✅ WebMCP tools registered only on `/` (desk page)  
+✅ All 8 tools remain accessible on `/`:
    - get_page_state
    - add_locale
    - set_locale
@@ -113,12 +128,20 @@ Static fallback for `prefers-reduced-motion`:
 ## Code Structure
 
 ```
-components/
-  └── LockhotBookshelfHero.tsx    # Main hero component
 app/
-  ├── page.tsx                    # Hero + Desk integration
+  ├── page.tsx                    # Main desk (no WebGL)
+  ├── landing/
+  │   └── page.tsx                # 3D bookshelf landing
   └── globals.css                 # fadeIn animation
+components/
+  ├── LockhotDesk.tsx             # Desk component (unchanged)
+  └── LockhotBookshelfHero.tsx    # 3D shelf scene
 ```
+
+### Navigation Flow
+1. User visits `/landing` → sees 3D shelf with templates
+2. Clicks "Open Desk →" → navigates to `/`
+3. From `/`, "View Landing Page →" link in top-right returns to shelf
 
 ## Template Placeholders
 
@@ -132,21 +155,24 @@ Future: Replace with actual phone screenshot images via texture mapping.
 
 ## Comparison to Five-Phone Hero
 
-### Removed (Five-Phone Arc)
-- ❌ 5 phones in circular arc
-- ❌ 15-second animation loop
-- ❌ EN → DE locale morph
-- ❌ Overflow pulsing demo
+### Removed from `/`
+- ❌ Five-phone arc on main page
+- ❌ Any WebGL on desk page
+- ❌ 15-second animation loop on main page
+- ❌ EN → DE locale morph on main page
+- ❌ Overflow pulsing demo on main page
 - ❌ Lock/unlock button
 - ❌ WebMCP tools HUD
 
-### Added (Bookshelf)
-- ✅ 3D wooden bookshelf structure
+### Added
+- ✅ Separate `/landing` route for 3D experience
+- ✅ 3D wooden bookshelf structure on landing
 - ✅ 4 template volumes (matches actual templates)
 - ✅ Mouse parallax exploration
 - ✅ Warm library aesthetic
 - ✅ Complete Shelf design language
-- ✅ Simpler, more product-focused
+- ✅ Fast desk page with no WebGL overhead
+- ✅ Simple navigation links between pages
 
 ## Browser Support
 
