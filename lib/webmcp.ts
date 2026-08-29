@@ -1,5 +1,7 @@
 import { initializeWebMCPPolyfill } from '@mcp-b/webmcp-polyfill';
-import type { Locale, SlideData } from './types';
+import type { Locale, SlideData, Project, iTunesLookupResult } from './types';
+import { parseAppStoreUrl } from './storage';
+import { measureOverflow } from './overflow';
 
 declare global {
   interface Document {
@@ -49,9 +51,13 @@ export function getWebMCPState() {
 export async function registerWebMCPTools(
   getSlidesRef: () => SlideData[],
   getCurrentLocaleRef: () => Locale,
+  getProjectRef: () => Project | null,
+  getLocalesRef: () => Locale[],
   setSlides: (updater: (prev: SlideData[]) => SlideData[]) => void,
   setCurrentLocale: (locale: Locale) => void,
-  exportZip: (slides: SlideData[], locale: Locale) => Promise<void>
+  addLocale: (locale: Locale) => void,
+  importAppStore: (url: string) => Promise<{ success: boolean; error?: string; project?: Project }>,
+  exportZip: (slides: SlideData[], locale: Locale, projectName: string) => Promise<void>
 ) {
   if (state.registered) {
     return;
@@ -68,7 +74,7 @@ export async function registerWebMCPTools(
   const tools = [
     {
       name: "get_page_state",
-      description: "Get the current page state including locale, all slide overlays, locked status, overflow flags, and comments",
+      description: "Get the current page state including project info, locale, all slide overlays, locked status, overflow flags, and comments",
       inputSchema: {
         type: "object" as const,
         properties: {},
@@ -80,29 +86,168 @@ export async function registerWebMCPTools(
       execute: async () => {
         const locale = getCurrentLocaleRef();
         const currentSlides = getSlidesRef();
+        const project = getProjectRef();
+        const locales = getLocalesRef();
+        
         return {
+          project: project ? {
+            id: project.id,
+            name: project.name,
+            storeUrl: project.storeUrl,
+          } : null,
           currentLocale: locale,
+          availableLocales: locales,
           slides: currentSlides.map(slide => ({
             id: slide.id,
-            headline: slide.overlays[locale].headline,
-            subhead: slide.overlays[locale].subhead,
+            headline: slide.overlays[locale]?.headline || '',
+            subhead: slide.overlays[locale]?.subhead || '',
             locked: slide.locked,
-            overflow: slide.overflow[locale],
+            overflow: slide.overflow[locale] || false,
             comments: slide.comments,
+            backgroundImage: slide.backgroundImage,
           })),
         };
       },
     },
     {
-      name: "set_locale",
-      description: "Switch to a different locale (en, de, es, ja)",
+      name: "import_app_store",
+      description: "Import an App Store app by URL, creating a new project with up to 5 screenshots and seeding English overlays from app metadata",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          url: {
+            type: "string",
+            description: "App Store URL (e.g., https://apps.apple.com/us/app/example/id123456789)",
+          },
+        },
+        required: ["url"],
+        additionalProperties: false,
+      },
+      execute: async (params: Record<string, unknown>) => {
+        const url = params.url as string;
+        
+        try {
+          const result = await importAppStore(url);
+          
+          if (!result.success) {
+            return { success: false, error: result.error };
+          }
+          
+          return {
+            success: true,
+            project: {
+              name: result.project!.name,
+              storeUrl: result.project!.storeUrl,
+              slideCount: result.project!.slides.length,
+            },
+            message: `Imported ${result.project!.name} with ${result.project!.slides.length} screenshots`,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Import failed',
+          };
+        }
+      },
+    },
+    {
+      name: "add_locale",
+      description: "Add a new locale to the project. Use BCP 47 codes (e.g., en, de, es, ja, fr, pt-BR, zh-Hans). ChatGPT should then translate via set_overlay.",
       inputSchema: {
         type: "object" as const,
         properties: {
           locale: {
             type: "string",
-            enum: ["en", "de", "es", "ja"],
-            description: "Target locale code",
+            description: "BCP 47 locale code (e.g., de, es, ja, fr, pt-BR, zh-Hans)",
+          },
+        },
+        required: ["locale"],
+        additionalProperties: false,
+      },
+      execute: async (params: Record<string, unknown>) => {
+        const locale = params.locale as string;
+        const locales = getLocalesRef();
+        
+        if (locales.includes(locale)) {
+          return {
+            success: false,
+            error: `Locale ${locale} already exists`,
+          };
+        }
+        
+        const currentSlides = getSlidesRef();
+        const enOverlays = currentSlides.map(s => s.overlays['en']);
+        
+        addLocale(locale);
+        
+        const slides = getSlidesRef();
+        
+        return {
+          success: true,
+          locale,
+          availableLocales: getLocalesRef(),
+          message: `Added locale ${locale}. Use set_overlay to translate each slide's headline and subhead.`,
+          slidesToTranslate: slides.map((s, i) => ({
+            slideId: s.id,
+            enHeadline: enOverlays[i]?.headline || '',
+            enSubhead: enOverlays[i]?.subhead || '',
+          })),
+        };
+      },
+    },
+    {
+      name: "set_slide_image",
+      description: "Set a slide's background image from a URL (ChatGPT-generated image or proxied App Store screenshot)",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          slide: {
+            type: "number",
+            description: "Slide ID (1-5)",
+          },
+          url: {
+            type: "string",
+            description: "Image URL (can be ChatGPT-generated or any web URL)",
+          },
+        },
+        required: ["slide", "url"],
+        additionalProperties: false,
+      },
+      execute: async (params: Record<string, unknown>) => {
+        const slideId = params.slide as number;
+        const url = params.url as string;
+        
+        const currentSlides = getSlidesRef();
+        const slide = currentSlides.find(s => s.id === slideId);
+        
+        if (!slide) {
+          return { success: false, error: "Slide not found" };
+        }
+        
+        setSlides(prev => prev.map(s => {
+          if (s.id === slideId) {
+            return { ...s, backgroundImage: url };
+          }
+          return s;
+        }));
+        
+        return {
+          success: true,
+          slideId,
+          newImageUrl: url,
+          message: `Updated slide ${slideId} background image`,
+        };
+      },
+    },
+    {
+      name: "set_locale",
+      description: "Switch to a different locale from available locales",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          locale: {
+            type: "string",
+            description: "Target locale code from available locales",
           },
         },
         required: ["locale"],
@@ -110,9 +255,16 @@ export async function registerWebMCPTools(
       },
       execute: async (params: Record<string, unknown>) => {
         const locale = params.locale as Locale;
-        if (!["en", "de", "es", "ja"].includes(locale)) {
-          return { success: false, error: "Invalid locale" };
+        const locales = getLocalesRef();
+        
+        if (!locales.includes(locale)) {
+          return {
+            success: false,
+            error: `Invalid locale. Available locales: ${locales.join(', ')}`,
+            availableLocales: locales,
+          };
         }
+        
         setCurrentLocale(locale);
         return {
           success: true,
@@ -123,7 +275,7 @@ export async function registerWebMCPTools(
     },
     {
       name: "set_overlay",
-      description: "Set headline and/or subhead for a specific slide in the current locale. Does not affect locked slides.",
+      description: "Set headline and/or subhead for a specific slide in the current locale. Does not affect locked slides. Overflow is automatically measured.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -164,21 +316,18 @@ export async function registerWebMCPTools(
           };
         }
 
+        const newOverlay = {
+          headline: headline !== undefined ? headline : slide.overlays[locale]?.headline || '',
+          subhead: subhead !== undefined ? subhead : slide.overlays[locale]?.subhead || '',
+        };
+
+        const overflow = measureOverflow(newOverlay);
+
         setSlides(prev => prev.map(s => {
           if (s.id === slideId) {
             const updated = { ...s };
-            if (headline !== undefined) {
-              updated.overlays[locale] = {
-                ...updated.overlays[locale],
-                headline,
-              };
-            }
-            if (subhead !== undefined) {
-              updated.overlays[locale] = {
-                ...updated.overlays[locale],
-                subhead,
-              };
-            }
+            updated.overlays[locale] = newOverlay;
+            updated.overflow[locale] = overflow;
             return updated;
           }
           return s;
@@ -187,9 +336,11 @@ export async function registerWebMCPTools(
         return {
           success: true,
           slideId,
-          newHeadline: headline || slide.overlays[locale].headline,
-          newSubhead: subhead || slide.overlays[locale].subhead,
-          diff: `Updated slide ${slideId} ${headline ? 'headline' : ''} ${subhead ? 'subhead' : ''}`.trim(),
+          locale,
+          newHeadline: newOverlay.headline,
+          newSubhead: newOverlay.subhead,
+          overflow,
+          diff: `Updated slide ${slideId} ${headline !== undefined ? 'headline' : ''} ${subhead !== undefined ? 'subhead' : ''}`.trim(),
         };
       },
     },
@@ -209,9 +360,9 @@ export async function registerWebMCPTools(
         const currentSlides = getSlidesRef();
         const overflowStatus = currentSlides.map(slide => ({
           slideId: slide.id,
-          overflow: slide.overflow[locale],
-          headline: slide.overlays[locale].headline,
-          subhead: slide.overlays[locale].subhead,
+          overflow: slide.overflow[locale] || false,
+          headline: slide.overlays[locale]?.headline || '',
+          subhead: slide.overlays[locale]?.subhead || '',
         }));
         const overflowingSlides = overflowStatus.filter(s => s.overflow);
         return {
@@ -226,7 +377,7 @@ export async function registerWebMCPTools(
     },
     {
       name: "rewrite_overlay",
-      description: "Rewrite headline and/or subhead for a specific slide with an instruction. Does not affect locked slides.",
+      description: "Rewrite headline and/or subhead for a specific slide with an instruction. Does not affect locked slides. ChatGPT should generate the new text based on the instruction.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -262,60 +413,26 @@ export async function registerWebMCPTools(
           };
         }
 
-        const currentOverlay = slide.overlays[locale];
-        let newHeadline = currentOverlay.headline;
-        let newSubhead = currentOverlay.subhead;
-
-        if (instruction.toLowerCase().includes("shorter") || instruction.toLowerCase().includes("overflow")) {
-          const targetHeadlineLength = locale === "de" ? 4 : 5;
-          const targetSubheadLength = locale === "de" ? 4 : 5;
-          
-          const headlineWords = newHeadline.split(" ");
-          const subheadWords = newSubhead.split(" ");
-          
-          if (headlineWords.length > targetHeadlineLength) {
-            newHeadline = headlineWords.slice(0, targetHeadlineLength).join(" ");
-          }
-          
-          if (subheadWords.length > targetSubheadLength) {
-            newSubhead = subheadWords.slice(0, targetSubheadLength).join(" ");
-          }
-        }
-
-        setSlides(prev => prev.map(s => {
-          if (s.id === slideId) {
-            const updated = { ...s };
-            updated.overlays[locale] = {
-              headline: newHeadline,
-              subhead: newSubhead,
-            };
-            updated.overflow[locale] = false;
-            return updated;
-          }
-          return s;
-        }));
-
+        const currentOverlay = slide.overlays[locale] || { headline: '', subhead: '' };
+        
         return {
-          success: true,
-          slideId,
+          success: false,
+          error: "ChatGPT should generate the new text and call set_overlay directly",
           instruction,
-          oldHeadline: currentOverlay.headline,
-          oldSubhead: currentOverlay.subhead,
-          newHeadline,
-          newSubhead,
-          diff: `Rewrote slide ${slideId}: "${currentOverlay.headline}" → "${newHeadline}" | "${currentOverlay.subhead}" → "${newSubhead}"`,
+          currentHeadline: currentOverlay.headline,
+          currentSubhead: currentOverlay.subhead,
+          message: `To rewrite slide ${slideId}, ChatGPT should generate new text based on "${instruction}" and call set_overlay(slide=${slideId}, headline="...", subhead="...")`,
         };
       },
     },
     {
       name: "apply_locale_pass",
-      description: "Rewrite all unlocked overflowing slides for a specific locale",
+      description: "Identify all unlocked overflowing slides for a specific locale. ChatGPT should then rewrite them via set_overlay.",
       inputSchema: {
         type: "object" as const,
         properties: {
           locale: {
             type: "string",
-            enum: ["en", "de", "es", "ja"],
             description: "Target locale code",
           },
         },
@@ -324,13 +441,18 @@ export async function registerWebMCPTools(
       },
       execute: async (params: Record<string, unknown>) => {
         const locale = params.locale as Locale;
-        if (!["en", "de", "es", "ja"].includes(locale)) {
-          return { success: false, error: "Invalid locale" };
+        const locales = getLocalesRef();
+        
+        if (!locales.includes(locale)) {
+          return {
+            success: false,
+            error: `Invalid locale. Available: ${locales.join(', ')}`,
+          };
         }
 
         const currentSlides = getSlidesRef();
         const overflowingSlides = currentSlides.filter(
-          s => s.overflow[locale] && !s.locked
+          s => (s.overflow[locale] || false) && !s.locked
         );
 
         if (overflowingSlides.length === 0) {
@@ -342,35 +464,16 @@ export async function registerWebMCPTools(
           };
         }
 
-        const targetLength = locale === "de" ? 4 : 5;
-
-        setSlides(prev => prev.map(slide => {
-          if (slide.overflow[locale] && !slide.locked) {
-            const updated = { ...slide };
-            const currentOverlay = slide.overlays[locale];
-            const headlineWords = currentOverlay.headline.split(" ");
-            const subheadWords = currentOverlay.subhead.split(" ");
-            
-            updated.overlays[locale] = {
-              headline: headlineWords.length > targetLength 
-                ? headlineWords.slice(0, targetLength).join(" ")
-                : currentOverlay.headline,
-              subhead: subheadWords.length > targetLength
-                ? subheadWords.slice(0, targetLength).join(" ")
-                : currentOverlay.subhead,
-            };
-            updated.overflow[locale] = false;
-            return updated;
-          }
-          return slide;
-        }));
-
         return {
-          success: true,
+          success: false,
           locale,
-          fixedCount: overflowingSlides.length,
-          fixedSlides: overflowingSlides.map(s => s.id),
-          message: `Fixed ${overflowingSlides.length} overflowing slide(s) in ${locale}`,
+          overflowingSlides: overflowingSlides.map(s => ({
+            slideId: s.id,
+            headline: s.overlays[locale]?.headline || '',
+            subhead: s.overlays[locale]?.subhead || '',
+            overflow: true,
+          })),
+          message: `Found ${overflowingSlides.length} overflowing slide(s) in ${locale}. ChatGPT should rewrite each via set_overlay.`,
         };
       },
     },
@@ -433,14 +536,17 @@ export async function registerWebMCPTools(
         try {
           const locale = getCurrentLocaleRef();
           const currentSlides = getSlidesRef();
-          await exportZip(currentSlides, locale);
+          const project = getProjectRef();
+          const projectName = project?.name || 'lockshot';
+          
+          await exportZip(currentSlides, locale, projectName);
           return {
             success: true,
             locale,
             fileCount: currentSlides.length,
             dimensions: "1320x2868",
             format: "PNG (no alpha, sRGB)",
-            filenames: currentSlides.map(s => `habit-slide-${s.id}-${locale}.png`),
+            filenames: currentSlides.map(s => `${projectName.toLowerCase().replace(/\s+/g, '-')}-slide-${s.id}-${locale}.png`),
             message: `Exported ${currentSlides.length} PNG files for ${locale}`,
           };
         } catch (error) {

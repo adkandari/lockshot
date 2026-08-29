@@ -1,30 +1,48 @@
 "use client";
 
 import { SlideData, Locale } from "@/lib/types";
+import { useRef } from "react";
 
 interface SlideCardProps {
   slide: SlideData;
   currentLocale: Locale;
   onToggleLock: (slideId: number) => void;
+  onFileUpload: (file: File) => void;
 }
 
 export default function SlideCard({
   slide,
   currentLocale,
   onToggleLock,
+  onFileUpload,
 }: SlideCardProps) {
-  const overlay = slide.overlays[currentLocale];
-  const isOverflowing = slide.overflow[currentLocale];
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
+  const isOverflowing = slide.overflow[currentLocale] || false;
   const isLocked = slide.locked;
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      onFileUpload(file);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="relative">
+      <div className="relative group">
         <div className="aspect-[1320/2868] bg-gradient-to-br from-purple-500 to-pink-500 relative overflow-hidden">
           <img
-            src={slide.backgroundImage.replace(".png", ".svg")}
+            src={slide.backgroundImage.startsWith('http') || slide.backgroundImage.startsWith('data:') 
+              ? slide.backgroundImage 
+              : slide.backgroundImage.replace(".png", ".svg")}
             alt={`Slide ${slide.id}`}
             className="w-full h-full object-cover"
+            crossOrigin="anonymous"
           />
           
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
@@ -51,6 +69,20 @@ export default function SlideCard({
               🔒 Locked
             </div>
           )}
+
+          <button
+            onClick={handleFileClick}
+            className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            📷 Change Image
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
       </div>
 
@@ -89,10 +121,10 @@ export default function SlideCard({
 
         <div className="mt-3 text-xs text-gray-500">
           <div className="truncate">
-            <strong>H:</strong> {overlay.headline}
+            <strong>H:</strong> {overlay.headline || '(empty)'}
           </div>
           <div className="truncate">
-            <strong>S:</strong> {overlay.subhead}
+            <strong>S:</strong> {overlay.subhead || '(empty)'}
           </div>
         </div>
       </div>
