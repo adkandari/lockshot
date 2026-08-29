@@ -2,6 +2,8 @@
 
 iOS App Store screenshot localization desk powered by WebMCP. A human and ChatGPT share one page of iPhone frames — the agent rewrites overlay copy, switches locales, and flags overflow. Only the human can lock a slide. Locked copy is what exports.
 
+**WebMCP Fixed**: As of commit `c3a151d`, all WebMCP registration issues have been resolved. The app now correctly registers tools in ChatGPT Desktop.
+
 ## Why WebMCP?
 
 Lockshot demonstrates WebMCP's power for collaborative editing workflows. The agent can read page state, rewrite copy, detect layout issues, and export assets — all through imperative tool registration on a single page. No backend, no polling, no context switching. The human retains full control through locking, and the agent can only modify what's unlocked.
