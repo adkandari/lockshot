@@ -1,4 +1,4 @@
-export type Locale = "en" | "de" | "es" | "ja";
+export type Locale = string;
 
 export interface SlideOverlay {
   headline: string;
@@ -13,6 +13,15 @@ export interface SlideData {
   locked: boolean;
   comments: string[];
   overflow: Record<Locale, boolean>;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  storeUrl: string;
+  locales: Locale[];
+  slides: SlideData[];
+  createdAt: number;
 }
 
 export interface AppData {
@@ -37,4 +46,15 @@ export interface WebMCPTool {
     readOnlyHint?: boolean;
   };
   execute: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+}
+
+export interface iTunesLookupResult {
+  resultCount: number;
+  results: Array<{
+    trackId: number;
+    trackName: string;
+    description: string;
+    screenshotUrls: string[];
+    artistName?: string;
+  }>;
 }

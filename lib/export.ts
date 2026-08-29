@@ -4,8 +4,9 @@ import { SlideData, Locale } from "./types";
 const EXPORT_WIDTH = 1320;
 const EXPORT_HEIGHT = 2868;
 
-export async function exportZip(slides: SlideData[], locale: Locale) {
+export async function exportZip(slides: SlideData[], locale: Locale, projectName: string = 'lockshot') {
   const zip = new JSZip();
+  const safeProjectName = projectName.toLowerCase().replace(/\s+/g, '-');
 
   for (const slide of slides) {
     const canvas = document.createElement("canvas");
@@ -46,6 +47,11 @@ export async function exportZip(slides: SlideData[], locale: Locale) {
     }
 
     const overlay = slide.overlays[locale];
+    
+    if (!overlay) {
+      console.warn(`No overlay for locale ${locale} on slide ${slide.id}, skipping`);
+      continue;
+    }
 
     const boxWidth = EXPORT_WIDTH * 0.85;
     const boxHeight = EXPORT_HEIGHT * 0.3;
@@ -82,14 +88,14 @@ export async function exportZip(slides: SlideData[], locale: Locale) {
       );
     });
 
-    zip.file(`habit-slide-${slide.id}-${locale}.png`, blob);
+    zip.file(`${safeProjectName}-slide-${slide.id}-${locale}.png`, blob);
   }
 
   const zipBlob = await zip.generateAsync({ type: "blob" });
   const url = URL.createObjectURL(zipBlob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `habit-${locale}-screenshots.zip`;
+  link.download = `${safeProjectName}-${locale}-screenshots.zip`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
