@@ -56,6 +56,7 @@ export async function registerWebMCPTools(
   setCurrentLocale: (locale: Locale) => void,
   addLocale: (locale: Locale) => void,
   setTemplate: (template: TemplateId, slideId?: number) => void,
+  resetProject: () => void,
   exportZip: (slides: SlideData[], locale: Locale, projectName: string) => Promise<void>
 ) {
   if (state.registered) {
@@ -144,7 +145,7 @@ export async function registerWebMCPTools(
           success: true,
           locale,
           availableLocales: getLocalesRef(),
-          message: `Added locale ${locale}. Use set_overlay to translate each slide's headline and subhead.`,
+          message: `Added locale ${locale}. This locale now shows English draft overlays. You MUST call set_overlay for each slide to translate the text. Call set_overlay(slide=1, headline="...", subhead="...") through set_overlay(slide=5, headline="...", subhead="...") with translated ${locale} text.`,
           slidesToTranslate: slides.map((s, i) => ({
             slideId: s.id,
             enHeadline: enOverlays[i]?.headline || '',
@@ -490,6 +491,22 @@ export async function registerWebMCPTools(
           slideId,
           comment: text,
           message: `Added comment to slide ${slideId}`,
+        };
+      },
+    },
+    {
+      name: "reset_project",
+      description: "Clear the current project and start over with a fresh empty state (equivalent to 'Start Over' button). Wipes localStorage, clears images, resets to empty drop zone.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {},
+        additionalProperties: false,
+      },
+      execute: async () => {
+        resetProject();
+        return {
+          success: true,
+          message: "Project reset. Drop zone is ready for new screenshots.",
         };
       },
     },
