@@ -3,5 +3,20 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Origin-Agent-Cluster",
+          "value": "?1"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "tools=(self)"
+        }
+      ]
+    }
+  ]
 }
