@@ -3,6 +3,7 @@
 import { SlideData, Locale } from "@/lib/types";
 import { useRef, useEffect, useState } from "react";
 import { createImageURL } from "@/lib/imageStorage";
+import { extractDominantColor } from "@/lib/colorExtract";
 
 interface SlideCardProps {
   slide: SlideData;
@@ -19,6 +20,7 @@ export default function SlideCard({
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [kovaColors, setKovaColors] = useState<{ light: string; dark: string; text: string } | null>(null);
   
   const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
   const isOverflowing = slide.overflow[currentLocale] || false;
@@ -28,10 +30,31 @@ export default function SlideCard({
   useEffect(() => {
     if (slide.imageKey) {
       createImageURL(slide.imageKey).then(url => {
-        if (url) setImageUrl(url);
+        if (url) {
+          setImageUrl(url);
+          // Extract color for Kova template
+          if (slide.templateId === 'full_bleed_caption_bottom') {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = async () => {
+              const colors = await extractDominantColor(img);
+              setKovaColors(colors);
+            };
+            img.src = url;
+          }
+        }
       });
     } else if (slide.backgroundImage) {
       setImageUrl(slide.backgroundImage);
+      if (slide.templateId === 'full_bleed_caption_bottom') {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = async () => {
+          const colors = await extractDominantColor(img);
+          setKovaColors(colors);
+        };
+        img.src = slide.backgroundImage;
+      }
     }
     
     return () => {
@@ -39,7 +62,7 @@ export default function SlideCard({
         URL.revokeObjectURL(imageUrl);
       }
     };
-  }, [slide.imageKey, slide.backgroundImage]);
+  }, [slide.imageKey, slide.backgroundImage, slide.templateId]);
 
   const handleFileClick = () => {
     fileInputRef.current?.click();
@@ -143,33 +166,71 @@ export default function SlideCard({
           </>
         );
 
-      case "full_bleed_caption_bottom": // Kova: Vibrant purple gradient
+      case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
       default:
+        const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
         return (
           <>
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={`Slide ${slide.id}`}
-                className="w-full h-full object-cover"
-                crossOrigin="anonymous"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500" />
-            )}
+            {/* Two-tone organic background */}
+            <div 
+              className="absolute inset-0" 
+              style={{ background: `linear-gradient(135deg, ${colors.light} 0%, ${colors.light} 100%)` }}
+            />
+            
+            {/* Organic blob shapes */}
+            <div 
+              className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-60 blur-3xl"
+              style={{ backgroundColor: colors.dark, transform: 'translate(30%, -30%)' }}
+            />
+            <div 
+              className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-50 blur-3xl"
+              style={{ backgroundColor: colors.dark, transform: 'translate(-25%, 25%)' }}
+            />
+            
+            {/* Headline at top */}
             {hasOverlay && (
-              <div className="absolute bottom-0 left-0 right-0 z-10">
-                <div className="bg-gradient-to-t from-violet-600/95 via-purple-600/90 to-transparent px-10 py-10 backdrop-blur-sm">
-                  {overlay.headline && (
-                    <h2 className={`text-3xl font-black text-white leading-tight mb-3 tracking-tight ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.headline}
-                    </h2>
-                  )}
-                  {overlay.subhead && (
-                    <p className={`text-base text-white/95 leading-relaxed ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.subhead}
-                    </p>
-                  )}
+              <div className="absolute top-12 left-0 right-0 px-10 z-20">
+                {overlay.headline && (
+                  <h2 
+                    className={`text-3xl font-black leading-tight mb-3 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text }}
+                  >
+                    {overlay.headline}
+                  </h2>
+                )}
+                {overlay.subhead && (
+                  <p 
+                    className={`text-base leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text, opacity: 0.8 }}
+                  >
+                    {overlay.subhead}
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {/* Phone frame with screenshot */}
+            {imageUrl && (
+              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '160px' : '0' }}>
+                <div className="relative w-[58%] aspect-[9/19.5] bg-black rounded-[3rem] shadow-2xl overflow-hidden">
+                  <img
+                    src={imageUrl}
+                    alt={`Slide ${slide.id}`}
+                    className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback if no image */}
+            {!imageUrl && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center text-gray-400"
+                style={{ paddingTop: hasOverlay ? '160px' : '0' }}
+              >
+                <div className="w-[58%] aspect-[9/19.5] bg-gray-200 rounded-[3rem] flex items-center justify-center">
+                  <span className="text-sm">No screenshot</span>
                 </div>
               </div>
             )}

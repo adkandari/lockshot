@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { SlideData, Locale, TemplateId } from "./types";
 import { loadImage as loadImageFromIDB } from "./imageStorage";
+import { extractDominantColor } from "./colorExtract";
 
 const EXPORT_WIDTH = 1320;
 const EXPORT_HEIGHT = 2868;
@@ -35,7 +36,13 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay);
+    // Extract colors for Kova if needed
+    let kovaColors = null;
+    if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
+      kovaColors = await extractDominantColor(screenshotImg);
+    }
+
+    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, kovaColors);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -67,7 +74,8 @@ async function renderTemplate(
   templateId: TemplateId,
   img: HTMLImageElement | null,
   overlay: { headline: string; subhead: string } | undefined,
-  hasOverlay: boolean
+  hasOverlay: boolean,
+  kovaColors?: { light: string; dark: string; text: string } | null
 ) {
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
@@ -222,51 +230,92 @@ async function renderTemplate(
       }
       break;
 
-    case "full_bleed_caption_bottom": // Kova: Vibrant purple gradient
+    case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
     default:
-      if (img) {
-        ctx.drawImage(img, 0, 0, width, height);
-      } else {
-        const fallbackGradient = ctx.createLinearGradient(0, 0, width, height);
-        fallbackGradient.addColorStop(0, "#8b5cf6"); // violet-500
-        fallbackGradient.addColorStop(0.5, "#a855f7"); // purple-500
-        fallbackGradient.addColorStop(1, "#d946ef"); // fuchsia-500
-        ctx.fillStyle = fallbackGradient;
-        ctx.fillRect(0, 0, width, height);
-      }
-
+      const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+      
+      // 1. Fill with light background
+      ctx.fillStyle = colors.light;
+      ctx.fillRect(0, 0, width, height);
+      
+      // 2. Draw organic blob shapes
+      ctx.fillStyle = colors.dark;
+      ctx.globalAlpha = 0.6;
+      
+      // Top-right blob
+      const blob1X = width * 0.85;
+      const blob1Y = height * 0.1;
+      const blob1R = width * 0.35;
+      const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
+      gradient1.addColorStop(0, colors.dark);
+      gradient1.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient1;
+      ctx.beginPath();
+      ctx.arc(blob1X, blob1Y, blob1R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Bottom-left blob
+      ctx.globalAlpha = 0.5;
+      const blob2X = width * 0.15;
+      const blob2Y = height * 0.9;
+      const blob2R = width * 0.3;
+      const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
+      gradient2.addColorStop(0, colors.dark);
+      gradient2.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient2;
+      ctx.beginPath();
+      ctx.arc(blob2X, blob2Y, blob2R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.globalAlpha = 1.0;
+      
+      // 3. Draw headline at top
       if (hasOverlay && overlay) {
-        const overlayHeight = 380;
-        const overlayY = height - overlayHeight;
+        const textPadding = 100;
+        let textY = 120;
         
-        // Vibrant purple gradient wash (from transparent to solid)
-        const overlayGradient = ctx.createLinearGradient(0, overlayY - 100, 0, height);
-        overlayGradient.addColorStop(0, "rgba(124, 58, 237, 0)"); // transparent violet-600
-        overlayGradient.addColorStop(0.3, "rgba(124, 58, 237, 0.85)"); // violet-600
-        overlayGradient.addColorStop(0.7, "rgba(147, 51, 234, 0.9)"); // purple-600
-        overlayGradient.addColorStop(1, "rgba(147, 51, 234, 0.95)"); // purple-600
-        ctx.fillStyle = overlayGradient;
-        ctx.fillRect(0, overlayY - 100, width, overlayHeight + 100);
-
-        const padding = 100;
-        let currentY = overlayY + 60;
-
         if (overlay.headline) {
           ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = colors.text;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 140);
-          currentY += 160;
+          wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
+          textY += 160;
         }
-
+        
         if (overlay.subhead) {
           ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+          ctx.fillStyle = colors.text;
+          ctx.globalAlpha = 0.8;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 80);
+          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 80);
+          ctx.globalAlpha = 1.0;
         }
+      }
+      
+      // 4. Draw phone frame with screenshot
+      if (img) {
+        const frameWidth = width * 0.58;
+        const frameHeight = frameWidth * (19.5 / 9);
+        const frameX = (width - frameWidth) / 2;
+        const frameY = hasOverlay ? 580 : (height - frameHeight) / 2;
+        const frameRadius = 96;
+        
+        // Shadow
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = 80;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 40;
+        
+        ctx.beginPath();
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+        ctx.clip();
+        ctx.fillStyle = "#000000";
+        ctx.fill();
+        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        ctx.restore();
       }
       break;
   }
