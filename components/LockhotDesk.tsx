@@ -31,9 +31,9 @@ const COMMON_LOCALES = [
 ];
 
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
-  { id: "full_bleed_caption_bottom", name: "Full Bleed", description: "Screenshot fills frame, caption at bottom" },
-  { id: "caption_top", name: "Caption Top", description: "Caption bar at top, screenshot below" },
-  { id: "framed_on_gradient", name: "Framed", description: "Phone frame on gradient background" },
+  { id: "full_bleed_caption_bottom", name: "Kova", description: "Vibrant purple gradient with bold headlines" },
+  { id: "caption_top", name: "Pluto", description: "Clean blue and white SaaS style" },
+  { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -433,16 +433,31 @@ export default function LockhotDesk() {
         <div className="space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <label className="text-sm font-medium text-gray-700">Template:</label>
-            {TEMPLATES.map(template => (
-              <button
-                key={template.id}
-                onClick={() => handleSetTemplate(template.id)}
-                className="px-3 py-1 text-sm rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
-                title={template.description}
-              >
-                {template.name}
-              </button>
-            ))}
+            {TEMPLATES.map(template => {
+              // Determine active template (most common among slides)
+              const templateCounts = slides.reduce((acc, slide) => {
+                acc[slide.templateId] = (acc[slide.templateId] || 0) + 1;
+                return acc;
+              }, {} as Record<TemplateId, number>);
+              
+              const mostCommonTemplate = Object.entries(templateCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+              const isActive = mostCommonTemplate === template.id;
+              
+              return (
+                <button
+                  key={template.id}
+                  onClick={() => handleSetTemplate(template.id)}
+                  className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                    isActive 
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium' 
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title={template.description}
+                >
+                  {template.name}
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
