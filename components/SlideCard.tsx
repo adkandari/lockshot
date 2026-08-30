@@ -54,19 +54,19 @@ export default function SlideCard({
 
   const renderTemplate = () => {
     switch (slide.templateId) {
-      case "caption_top":
+      case "caption_top": // Pluto: Clean SaaS blue/white
         return (
           <>
             {hasOverlay && (
               <div className="absolute top-0 left-0 right-0 z-10">
-                <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-8 py-10">
+                <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-cyan-500 px-10 py-12">
                   {overlay.headline && (
-                    <h2 className={`text-2xl font-bold text-white leading-tight mb-2 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                    <h2 className={`text-3xl font-extrabold text-white leading-tight mb-3 tracking-tight ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.headline}
                     </h2>
                   )}
                   {overlay.subhead && (
-                    <p className={`text-base text-white/95 leading-snug ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                    <p className={`text-base text-white/95 leading-relaxed ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.subhead}
                     </p>
                   )}
@@ -74,13 +74,12 @@ export default function SlideCard({
               </div>
             )}
             {imageUrl && (
-              <div className={`absolute inset-0 ${hasOverlay ? 'top-32' : 'top-0'}`}>
-                <div className={hasOverlay ? 'h-full px-4' : 'h-full'}>
+              <div className={`absolute inset-0 ${hasOverlay ? 'top-40' : 'top-0'} bg-white`}>
+                <div className={hasOverlay ? 'h-full px-6 py-4' : 'h-full'}>
                   <img
                     src={imageUrl}
                     alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-cover"
-                    style={hasOverlay ? { borderRadius: '0.5rem' } : {}}
+                    className="w-full h-full object-cover rounded-2xl shadow-xl"
                     crossOrigin="anonymous"
                   />
                 </div>
@@ -89,28 +88,28 @@ export default function SlideCard({
           </>
         );
 
-      case "framed_on_gradient":
+      case "framed_on_gradient": // Astra: Dark navy + lavender
         return (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-indigo-700 to-purple-700" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12">
               {hasOverlay && (
-                <div className="text-center mb-8 z-10 max-w-[85%]">
+                <div className="text-center mb-10 z-10 max-w-[85%]">
                   {overlay.headline && (
-                    <h2 className={`text-3xl font-bold text-white leading-tight mb-3 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                    <h2 className={`text-4xl font-black text-white leading-tight mb-4 ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.headline}
                     </h2>
                   )}
                   {overlay.subhead && (
-                    <p className={`text-lg text-white/90 leading-relaxed ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                    <p className={`text-lg text-purple-200 leading-relaxed ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.subhead}
                     </p>
                   )}
                 </div>
               )}
               {imageUrl && (
-                <div className="relative w-[68%] aspect-[9/19.5] bg-black rounded-[3rem] shadow-2xl overflow-hidden ring-8 ring-black/20">
-                  <div className="absolute inset-0 rounded-[3rem] ring-1 ring-white/10 ring-inset"></div>
+                <div className="relative w-[65%] aspect-[9/19.5] bg-black rounded-[3.5rem] shadow-2xl overflow-hidden">
+                  <div className="absolute inset-0 rounded-[3.5rem] ring-2 ring-purple-400/30 ring-inset"></div>
                   <img
                     src={imageUrl}
                     alt={`Slide ${slide.id}`}
@@ -144,7 +143,7 @@ export default function SlideCard({
           </>
         );
 
-      case "full_bleed_caption_bottom":
+      case "full_bleed_caption_bottom": // Kova: Vibrant purple gradient
       default:
         return (
           <>
@@ -156,20 +155,22 @@ export default function SlideCard({
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500" />
             )}
             {hasOverlay && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/75 backdrop-blur-md px-8 py-8 z-10">
-                {overlay.headline && (
-                  <h2 className={`text-2xl font-bold text-white leading-tight mb-2.5 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                    {overlay.headline}
-                  </h2>
-                )}
-                {overlay.subhead && (
-                  <p className={`text-base text-gray-100 leading-snug ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                    {overlay.subhead}
-                  </p>
-                )}
+              <div className="absolute bottom-0 left-0 right-0 z-10">
+                <div className="bg-gradient-to-t from-violet-600/95 via-purple-600/90 to-transparent px-10 py-10 backdrop-blur-sm">
+                  {overlay.headline && (
+                    <h2 className={`text-3xl font-black text-white leading-tight mb-3 tracking-tight ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.headline}
+                    </h2>
+                  )}
+                  {overlay.subhead && (
+                    <p className={`text-base text-white/95 leading-relaxed ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.subhead}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </>

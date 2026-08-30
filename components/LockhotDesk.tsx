@@ -31,9 +31,9 @@ const COMMON_LOCALES = [
 ];
 
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
-  { id: "full_bleed_caption_bottom", name: "Full Bleed", description: "Screenshot fills frame, caption at bottom" },
-  { id: "caption_top", name: "Caption Top", description: "Caption bar at top, screenshot below" },
-  { id: "framed_on_gradient", name: "Framed", description: "Phone frame on gradient background" },
+  { id: "full_bleed_caption_bottom", name: "Kova", description: "Vibrant purple gradient with bold headlines" },
+  { id: "caption_top", name: "Pluto", description: "Clean blue and white SaaS style" },
+  { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {

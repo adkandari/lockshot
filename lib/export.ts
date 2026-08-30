@@ -73,28 +73,28 @@ async function renderTemplate(
   const height = EXPORT_HEIGHT;
 
   switch (templateId) {
-    case "caption_top":
+    case "caption_top": // Pluto: Clean SaaS blue/white
       if (hasOverlay && overlay) {
-        const captionHeight = 320;
+        const captionHeight = 380;
         
-        // Rich gradient background for caption
+        // Bright blue gradient for clean SaaS look
         const gradient = ctx.createLinearGradient(0, 0, width, captionHeight);
-        gradient.addColorStop(0, "#4f46e5"); // indigo-600
-        gradient.addColorStop(0.5, "#9333ea"); // purple-600
-        gradient.addColorStop(1, "#db2777"); // pink-600
+        gradient.addColorStop(0, "#0ea5e9"); // sky-500
+        gradient.addColorStop(0.5, "#3b82f6"); // blue-500
+        gradient.addColorStop(1, "#06b6d4"); // cyan-500
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, captionHeight);
 
-        const padding = 80;
+        const padding = 100;
         let currentY = padding + 20;
 
         if (overlay.headline) {
-          ctx.font = `bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 110);
-          currentY += 130;
+          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 140);
+          currentY += 160;
         }
 
         if (overlay.subhead) {
@@ -102,22 +102,30 @@ async function renderTemplate(
           ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 76);
+          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 80);
         }
       }
 
       if (img) {
-        const imgY = hasOverlay ? 340 : 0;
-        const imgHeight = hasOverlay ? height - 360 : height;
-        const imgX = hasOverlay ? 40 : 0;
-        const imgWidth = hasOverlay ? width - 80 : width;
+        const imgY = hasOverlay ? 420 : 0;
+        const imgHeight = hasOverlay ? height - 480 : height;
+        const imgX = hasOverlay ? 60 : 0;
+        const imgWidth = hasOverlay ? width - 120 : width;
         
         if (hasOverlay) {
-          // Draw rounded image
+          // White background behind rounded image
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, imgY - 40, width, height - imgY + 40);
+          
+          // Draw rounded image with shadow
           ctx.save();
-          const radius = 24;
+          const radius = 48;
           ctx.beginPath();
           roundRect(ctx, imgX, imgY, imgWidth, imgHeight, radius);
+          ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+          ctx.shadowBlur = 60;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 20;
           ctx.clip();
           ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
           ctx.restore();
@@ -127,32 +135,32 @@ async function renderTemplate(
       }
       break;
 
-    case "framed_on_gradient":
-      // Rich gradient background
+    case "framed_on_gradient": // Astra: Dark navy + lavender
+      // Deep navy gradient
       const gradientBg = ctx.createLinearGradient(0, 0, width, height);
-      gradientBg.addColorStop(0, "#475569"); // slate-700
-      gradientBg.addColorStop(0.5, "#4338ca"); // indigo-700
-      gradientBg.addColorStop(1, "#7e22ce"); // purple-700
+      gradientBg.addColorStop(0, "#0f172a"); // slate-900
+      gradientBg.addColorStop(0.5, "#172554"); // blue-950
+      gradientBg.addColorStop(1, "#312e81"); // indigo-950
       ctx.fillStyle = gradientBg;
       ctx.fillRect(0, 0, width, height);
 
-      let frameY = 700;
+      let frameY = 780;
       
       if (hasOverlay && overlay) {
-        let textY = 280;
+        let textY = 260;
 
         if (overlay.headline) {
-          ctx.font = `bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, width / 2, textY, width * 0.85, 138);
-          textY += 160;
+          wrapText(ctx, overlay.headline, width / 2, textY, width * 0.85, 160);
+          textY += 200;
         }
 
         if (overlay.subhead) {
           ctx.font = `76px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.fillStyle = "#e9d5ff"; // purple-200
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.subhead, width / 2, textY, width * 0.85, 92);
@@ -160,24 +168,21 @@ async function renderTemplate(
       }
 
       if (img) {
-        const frameWidth = width * 0.68;
+        const frameWidth = width * 0.65;
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
-        const frameRadius = 96;
+        const frameRadius = 112;
 
-        // Draw phone frame with shadows
+        // Main frame with lavender ring accent
         ctx.save();
         
-        // Outer shadow ring
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-        const shadowPadding = 24;
+        // Lavender accent ring
+        ctx.strokeStyle = "rgba(196, 181, 253, 0.3)"; // purple-300 with opacity
+        ctx.lineWidth = 6;
         ctx.beginPath();
-        roundRect(ctx, frameX - shadowPadding, frameY - shadowPadding, 
-                  frameWidth + shadowPadding * 2, frameHeight + shadowPadding * 2, 
-                  frameRadius + shadowPadding);
-        ctx.fill();
+        roundRect(ctx, frameX - 3, frameY - 3, frameWidth + 6, frameHeight + 6, frameRadius + 3);
+        ctx.stroke();
         
-        // Main frame
         ctx.beginPath();
         roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
         ctx.clip();
@@ -185,13 +190,6 @@ async function renderTemplate(
         ctx.fill();
         ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
         ctx.restore();
-
-        // Inner highlight ring
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
-        ctx.stroke();
       }
       break;
 
@@ -224,44 +222,50 @@ async function renderTemplate(
       }
       break;
 
-    case "full_bleed_caption_bottom":
+    case "full_bleed_caption_bottom": // Kova: Vibrant purple gradient
     default:
       if (img) {
         ctx.drawImage(img, 0, 0, width, height);
       } else {
         const fallbackGradient = ctx.createLinearGradient(0, 0, width, height);
-        fallbackGradient.addColorStop(0, "#d1d5db");
-        fallbackGradient.addColorStop(1, "#9ca3af");
+        fallbackGradient.addColorStop(0, "#8b5cf6"); // violet-500
+        fallbackGradient.addColorStop(0.5, "#a855f7"); // purple-500
+        fallbackGradient.addColorStop(1, "#d946ef"); // fuchsia-500
         ctx.fillStyle = fallbackGradient;
         ctx.fillRect(0, 0, width, height);
       }
 
       if (hasOverlay && overlay) {
-        const overlayHeight = 340;
+        const overlayHeight = 380;
         const overlayY = height - overlayHeight;
         
-        // Frosted dark bar
-        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-        ctx.fillRect(0, overlayY, width, overlayHeight);
+        // Vibrant purple gradient wash (from transparent to solid)
+        const overlayGradient = ctx.createLinearGradient(0, overlayY - 100, 0, height);
+        overlayGradient.addColorStop(0, "rgba(124, 58, 237, 0)"); // transparent violet-600
+        overlayGradient.addColorStop(0.3, "rgba(124, 58, 237, 0.85)"); // violet-600
+        overlayGradient.addColorStop(0.7, "rgba(147, 51, 234, 0.9)"); // purple-600
+        overlayGradient.addColorStop(1, "rgba(147, 51, 234, 0.95)"); // purple-600
+        ctx.fillStyle = overlayGradient;
+        ctx.fillRect(0, overlayY - 100, width, overlayHeight + 100);
 
-        const padding = 80;
-        let currentY = overlayY + padding;
+        const padding = 100;
+        let currentY = overlayY + 60;
 
         if (overlay.headline) {
-          ctx.font = `bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 110);
-          currentY += 130;
+          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 140);
+          currentY += 160;
         }
 
         if (overlay.subhead) {
           ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#f3f4f6";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 76);
+          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 80);
         }
       }
       break;
