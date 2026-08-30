@@ -58,26 +58,33 @@ export default function SlideCard({
         return (
           <>
             {hasOverlay && (
-              <div className="absolute top-0 left-0 right-0 bg-black/80 backdrop-blur-sm px-6 py-4 z-10">
-                {overlay.headline && (
-                  <h2 className={`text-lg font-bold text-white mb-1 ${isOverflowing ? 'text-red-300' : ''}`}>
-                    {overlay.headline}
-                  </h2>
-                )}
-                {overlay.subhead && (
-                  <p className={`text-sm text-gray-200 ${isOverflowing ? 'text-red-200' : ''}`}>
-                    {overlay.subhead}
-                  </p>
-                )}
+              <div className="absolute top-0 left-0 right-0 z-10">
+                <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-8 py-10">
+                  {overlay.headline && (
+                    <h2 className={`text-2xl font-bold text-white leading-tight mb-2 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.headline}
+                    </h2>
+                  )}
+                  {overlay.subhead && (
+                    <p className={`text-base text-white/95 leading-snug ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.subhead}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             {imageUrl && (
-              <img
-                src={imageUrl}
-                alt={`Slide ${slide.id}`}
-                className={`w-full h-full object-cover ${hasOverlay ? 'mt-20' : ''}`}
-                crossOrigin="anonymous"
-              />
+              <div className={`absolute inset-0 ${hasOverlay ? 'top-32' : 'top-0'}`}>
+                <div className={hasOverlay ? 'h-full px-4' : 'h-full'}>
+                  <img
+                    src={imageUrl}
+                    alt={`Slide ${slide.id}`}
+                    className="w-full h-full object-cover"
+                    style={hasOverlay ? { borderRadius: '0.5rem' } : {}}
+                    crossOrigin="anonymous"
+                  />
+                </div>
+              </div>
             )}
           </>
         );
@@ -85,24 +92,25 @@ export default function SlideCard({
       case "framed_on_gradient":
         return (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-indigo-700 to-purple-700" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12">
               {hasOverlay && (
-                <div className="text-center mb-4 z-10">
+                <div className="text-center mb-8 z-10 max-w-[85%]">
                   {overlay.headline && (
-                    <h2 className={`text-2xl font-bold text-white mb-2 ${isOverflowing ? 'text-red-300' : ''}`}>
+                    <h2 className={`text-3xl font-bold text-white leading-tight mb-3 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.headline}
                     </h2>
                   )}
                   {overlay.subhead && (
-                    <p className={`text-lg text-white/90 ${isOverflowing ? 'text-red-200' : ''}`}>
+                    <p className={`text-lg text-white/90 leading-relaxed ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                       {overlay.subhead}
                     </p>
                   )}
                 </div>
               )}
               {imageUrl && (
-                <div className="relative w-[70%] aspect-[9/19.5] bg-black rounded-[2rem] shadow-2xl overflow-hidden">
+                <div className="relative w-[68%] aspect-[9/19.5] bg-black rounded-[3rem] shadow-2xl overflow-hidden ring-8 ring-black/20">
+                  <div className="absolute inset-0 rounded-[3rem] ring-1 ring-white/10 ring-inset"></div>
                   <img
                     src={imageUrl}
                     alt={`Slide ${slide.id}`}
@@ -151,14 +159,14 @@ export default function SlideCard({
               <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400" />
             )}
             {hasOverlay && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm px-6 py-4 z-10">
+              <div className="absolute bottom-0 left-0 right-0 bg-black/75 backdrop-blur-md px-8 py-8 z-10">
                 {overlay.headline && (
-                  <h2 className={`text-lg font-bold text-white mb-1 ${isOverflowing ? 'text-red-300' : ''}`}>
+                  <h2 className={`text-2xl font-bold text-white leading-tight mb-2.5 ${isOverflowing ? 'text-red-300' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                     {overlay.headline}
                   </h2>
                 )}
                 {overlay.subhead && (
-                  <p className={`text-sm text-gray-200 ${isOverflowing ? 'text-red-200' : ''}`}>
+                  <p className={`text-base text-gray-100 leading-snug ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
                     {overlay.subhead}
                   </p>
                 )}

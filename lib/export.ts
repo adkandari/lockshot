@@ -75,75 +75,109 @@ async function renderTemplate(
   switch (templateId) {
     case "caption_top":
       if (hasOverlay && overlay) {
-        const captionHeight = 240;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        const captionHeight = 320;
+        
+        // Rich gradient background for caption
+        const gradient = ctx.createLinearGradient(0, 0, width, captionHeight);
+        gradient.addColorStop(0, "#4f46e5"); // indigo-600
+        gradient.addColorStop(0.5, "#9333ea"); // purple-600
+        gradient.addColorStop(1, "#db2777"); // pink-600
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, captionHeight);
 
-        const padding = 60;
-        let currentY = padding;
+        const padding = 80;
+        let currentY = padding + 20;
 
         if (overlay.headline) {
-          ctx.font = `bold 80px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          ctx.font = `bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 96);
-          currentY += 96 + 20;
+          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 110);
+          currentY += 130;
         }
 
         if (overlay.subhead) {
-          ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-          ctx.fillStyle = "#e5e7eb";
+          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 67);
+          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 76);
         }
       }
 
       if (img) {
-        const imgY = hasOverlay ? 240 : 0;
-        const imgHeight = hasOverlay ? height - 240 : height;
-        ctx.drawImage(img, 0, imgY, width, imgHeight);
+        const imgY = hasOverlay ? 340 : 0;
+        const imgHeight = hasOverlay ? height - 360 : height;
+        const imgX = hasOverlay ? 40 : 0;
+        const imgWidth = hasOverlay ? width - 80 : width;
+        
+        if (hasOverlay) {
+          // Draw rounded image
+          ctx.save();
+          const radius = 24;
+          ctx.beginPath();
+          roundRect(ctx, imgX, imgY, imgWidth, imgHeight, radius);
+          ctx.clip();
+          ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+          ctx.restore();
+        } else {
+          ctx.drawImage(img, 0, 0, width, height);
+        }
       }
       break;
 
     case "framed_on_gradient":
-      const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, "#9333ea");
-      gradient.addColorStop(1, "#db2777");
-      ctx.fillStyle = gradient;
+      // Rich gradient background
+      const gradientBg = ctx.createLinearGradient(0, 0, width, height);
+      gradientBg.addColorStop(0, "#475569"); // slate-700
+      gradientBg.addColorStop(0.5, "#4338ca"); // indigo-700
+      gradientBg.addColorStop(1, "#7e22ce"); // purple-700
+      ctx.fillStyle = gradientBg;
       ctx.fillRect(0, 0, width, height);
 
-      let frameY = 600;
+      let frameY = 700;
       
       if (hasOverlay && overlay) {
-        let textY = 300;
+        let textY = 280;
 
         if (overlay.headline) {
-          ctx.font = `bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          ctx.font = `bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, width / 2, textY, width * 0.8, 115);
-          textY += 135;
+          wrapText(ctx, overlay.headline, width / 2, textY, width * 0.85, 138);
+          textY += 160;
         }
 
         if (overlay.subhead) {
-          ctx.font = `72px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          ctx.font = `76px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, width / 2, textY, width * 0.8, 86);
+          wrapText(ctx, overlay.subhead, width / 2, textY, width * 0.85, 92);
         }
       }
 
       if (img) {
-        const frameWidth = width * 0.7;
+        const frameWidth = width * 0.68;
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
-        const frameRadius = 60;
+        const frameRadius = 96;
 
+        // Draw phone frame with shadows
         ctx.save();
+        
+        // Outer shadow ring
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        const shadowPadding = 24;
+        ctx.beginPath();
+        roundRect(ctx, frameX - shadowPadding, frameY - shadowPadding, 
+                  frameWidth + shadowPadding * 2, frameHeight + shadowPadding * 2, 
+                  frameRadius + shadowPadding);
+        ctx.fill();
+        
+        // Main frame
         ctx.beginPath();
         roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
         ctx.clip();
@@ -152,8 +186,9 @@ async function renderTemplate(
         ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
         ctx.restore();
 
+        // Inner highlight ring
         ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
         ctx.stroke();
@@ -202,30 +237,31 @@ async function renderTemplate(
       }
 
       if (hasOverlay && overlay) {
-        const overlayHeight = 300;
+        const overlayHeight = 340;
         const overlayY = height - overlayHeight;
         
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        // Frosted dark bar
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
         ctx.fillRect(0, overlayY, width, overlayHeight);
 
-        const padding = 60;
-        let currentY = overlayY + padding + 40;
+        const padding = 80;
+        let currentY = overlayY + padding;
 
         if (overlay.headline) {
-          ctx.font = `bold 80px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          ctx.font = `bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = "#ffffff";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 96);
-          currentY += 96 + 20;
+          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 110);
+          currentY += 130;
         }
 
         if (overlay.subhead) {
-          ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-          ctx.fillStyle = "#e5e7eb";
+          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.fillStyle = "#f3f4f6";
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 67);
+          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 76);
         }
       }
       break;
