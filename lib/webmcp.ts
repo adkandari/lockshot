@@ -89,6 +89,11 @@ export async function registerWebMCPTools(
         const project = getProjectRef();
         const locales = getLocalesRef();
         
+        const hasEmptyOverlays = currentSlides.some(slide => {
+          const overlay = slide.overlays[locale];
+          return !overlay || (!overlay.headline && !overlay.subhead);
+        });
+        
         return {
           project: project ? {
             id: project.id,
@@ -97,6 +102,8 @@ export async function registerWebMCPTools(
           } : null,
           currentLocale: locale,
           availableLocales: locales,
+          overlays_empty: hasEmptyOverlays,
+          hint: hasEmptyOverlays ? "Overlays are empty — write headline and subhead per slide with set_overlay" : undefined,
           slides: currentSlides.map(slide => ({
             id: slide.id,
             headline: slide.overlays[locale]?.headline || '',

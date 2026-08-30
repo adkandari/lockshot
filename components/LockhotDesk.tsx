@@ -34,7 +34,6 @@ const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
   { id: "full_bleed_caption_bottom", name: "Full Bleed", description: "Screenshot fills frame, caption at bottom" },
   { id: "caption_top", name: "Caption Top", description: "Caption bar at top, screenshot below" },
   { id: "framed_on_gradient", name: "Framed", description: "Phone frame on gradient background" },
-  { id: "gradient_only", name: "Gradient", description: "Gradient background only" },
 ];
 
 export default function LockhotDesk() {
@@ -47,6 +46,7 @@ export default function LockhotDesk() {
   const [newLocaleCode, setNewLocaleCode] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(true);
+  const [copyToast, setCopyToast] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slidesRef = useRef(slides);
@@ -285,6 +285,51 @@ export default function LockhotDesk() {
     await handleFilesUpload(files);
   };
 
+  const handleWriteHeadlines = async () => {
+    const prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
+    
+    // Try 1: ChatGPT Apps sendFollowUpMessage
+    if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
+      try {
+        await (window as any).openai.sendFollowUpMessage({ prompt });
+        setCopyToast("Sent to chat");
+        setTimeout(() => setCopyToast(""), 3000);
+        return;
+      } catch (e) {
+        console.log("sendFollowUpMessage failed, trying postMessage");
+      }
+    }
+    
+    // Try 2: MCP Apps ui/message postMessage
+    if (typeof window !== 'undefined' && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          jsonrpc: "2.0",
+          method: "ui/message",
+          params: {
+            role: "user",
+            content: [{ type: "text", text: prompt }]
+          }
+        }, "*");
+        setCopyToast("Sent to chat");
+        setTimeout(() => setCopyToast(""), 3000);
+        return;
+      } catch (e) {
+        console.log("postMessage failed, falling back to clipboard");
+      }
+    }
+    
+    // Fallback: clipboard
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopyToast("Copied — paste it in the ChatGPT chat");
+      setTimeout(() => setCopyToast(""), 3000);
+    } catch (e) {
+      setCopyToast("Failed to copy");
+      setTimeout(() => setCopyToast(""), 3000);
+    }
+  };
+
   const statusText = webMcpState.error 
     ? `WebMCP Error: ${webMcpState.error}`
     : webMcpState.enabled 
@@ -488,11 +533,24 @@ export default function LockhotDesk() {
             </div>
 
             <button
+              onClick={handleWriteHeadlines}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              ✏️ Write Headlines
+            </button>
+
+            <button
               onClick={handleExport}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Export ZIP
             </button>
+            
+            {copyToast && (
+              <span className="text-sm text-green-600 font-medium">
+                {copyToast}
+              </span>
+            )}
           </div>
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
