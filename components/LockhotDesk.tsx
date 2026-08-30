@@ -180,6 +180,7 @@ export default function LockhotDesk() {
       saveProject(updatedProject);
     }
 
+    setCurrentLocale(locale);
     setShowAddLocale(false);
     setNewLocaleCode('');
   };
@@ -230,6 +231,7 @@ export default function LockhotDesk() {
         handleAddLocale(locale);
       },
       handleSetTemplate,
+      handleStartOver,
       (slides, locale, projectName) => exportZip(slides, locale, projectName)
     ).then(() => {
       setWebMcpState(getWebMCPState());
@@ -268,6 +270,19 @@ export default function LockhotDesk() {
       }
       return updated;
     });
+  };
+
+  const handleStartOver = () => {
+    setCurrentProject(null);
+    setSlides([]);
+    setLocales(['en']);
+    setCurrentLocale('en');
+    saveCurrentProjectId(null);
+    setShowEmptyState(true);
+  };
+
+  const handleReplaceScreenshots = async (files: File[]) => {
+    await handleFilesUpload(files);
   };
 
   const statusText = webMcpState.error 
@@ -345,6 +360,12 @@ export default function LockhotDesk() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={handleStartOver}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
+            >
+              🔄 Start Over
+            </button>
             <div className="flex items-center gap-2 text-sm">
               <span
                 className={`inline-block w-3 h-3 rounded-full ${
@@ -391,13 +412,34 @@ export default function LockhotDesk() {
               >
                 {locales.map((locale) => {
                   const localeInfo = COMMON_LOCALES.find(l => l.code === locale);
+                  const enOverlay = slides[0]?.overlays['en'];
+                  const currentOverlay = slides[0]?.overlays[locale];
+                  const isDraft = locale !== 'en' && 
+                    enOverlay && currentOverlay && 
+                    enOverlay.headline === currentOverlay.headline &&
+                    enOverlay.subhead === currentOverlay.subhead;
+                  
                   return (
                     <option key={locale} value={locale}>
                       {localeInfo ? `${localeInfo.flag} ${localeInfo.name}` : locale}
+                      {isDraft ? ' (draft)' : ''}
                     </option>
                   );
                 })}
               </select>
+              {currentLocale !== 'en' && slides.length > 0 && (() => {
+                const enOverlay = slides[0]?.overlays['en'];
+                const currentOverlay = slides[0]?.overlays[currentLocale];
+                const isDraft = enOverlay && currentOverlay && 
+                  enOverlay.headline === currentOverlay.headline &&
+                  enOverlay.subhead === currentOverlay.subhead;
+                
+                return isDraft ? (
+                  <span className="text-xs text-orange-600 italic">
+                    English draft — ask ChatGPT to rewrite
+                  </span>
+                ) : null;
+              })()}
             </div>
 
             <div className="flex items-center gap-2">
@@ -440,6 +482,9 @@ export default function LockhotDesk() {
                   + Add Locale
                 </button>
               )}
+              <span className="text-xs text-gray-500">
+                💬 ChatGPT writes this locale via tools
+              </span>
             </div>
 
             <button
@@ -448,6 +493,32 @@ export default function LockhotDesk() {
             >
               Export ZIP
             </button>
+          </div>
+
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+              >
+                📸 Replace Screenshots
+              </button>
+              <span className="text-sm text-gray-600">
+                Click to select up to 5 new images
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleReplaceScreenshots(Array.from(e.target.files));
+                  }
+                }}
+                className="hidden"
+              />
+            </div>
           </div>
         </div>
       </header>

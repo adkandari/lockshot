@@ -189,7 +189,7 @@ export default function SlideCard({
 
           <button
             onClick={handleFileClick}
-            className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity z-20"
+            className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors z-20"
           >
             📷 Change Image
           </button>
