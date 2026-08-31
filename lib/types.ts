@@ -21,6 +21,11 @@ export interface SlideData {
   comments: string[];
   overflow: Record<Locale, boolean>;
   kind?: "campaign" | "product";
+  colors?: {
+    text?: string;
+    background?: string;
+    accent?: string;
+  };
 }
 
 export interface Project {

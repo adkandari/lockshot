@@ -175,29 +175,29 @@ export default function SlideCard({
     
     switch (slide.templateId) {
       case "caption_top": // Growth: Cream campaign energy with top type
-        const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
-        
-        // Derive cream tint from extracted color
-        const creamBg = growthColors.light;
-        const accentColor = growthColors.dark;
-        const textColor = growthColors.text;
+        // Normalize colors from either slide overrides or auto-sampled
+        const growthNormalizedColors = {
+          text: slide.colors?.text || extractedColors?.text || 'rgb(68, 64, 60)',
+          background: slide.colors?.background || extractedColors?.light || 'rgb(245, 242, 237)',
+          accent: slide.colors?.accent || extractedColors?.dark || 'rgb(168, 162, 158)',
+        };
         
         return (
           <>
             {/* Warm cream canvas */}
             <div 
               className="absolute inset-0" 
-              style={{ backgroundColor: creamBg }}
+              style={{ backgroundColor: growthNormalizedColors.background }}
             />
             
             {/* Soft organic blobs in corners */}
             <div 
               className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 blur-3xl"
-              style={{ backgroundColor: accentColor, transform: 'translate(-30%, -30%)' }}
+              style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(-30%, -30%)' }}
             />
             <div 
               className="absolute bottom-0 right-0 w-56 h-56 rounded-full opacity-30 blur-3xl"
-              style={{ backgroundColor: accentColor, transform: 'translate(30%, 30%)' }}
+              style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(30%, 30%)' }}
             />
             
             {/* Type at the TOP */}
@@ -206,7 +206,7 @@ export default function SlideCard({
                 {overlay.headline && (
                   <h2 
                     className={`text-2xl font-black leading-tight mb-2 tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: textColor }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: growthNormalizedColors.text }}
                   >
                     {overlay.headline}
                   </h2>
@@ -214,7 +214,7 @@ export default function SlideCard({
                 {overlay.subhead && (
                   <p 
                     className={`text-sm leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: 'var(--font-source-serif)', color: textColor, opacity: 0.85 }}
+                    style={{ fontFamily: 'var(--font-source-serif)', color: growthNormalizedColors.text, opacity: 0.85 }}
                   >
                     {overlay.subhead}
                   </p>
@@ -307,40 +307,46 @@ export default function SlideCard({
 
       case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
       default:
-        const colors = extractedColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+        // Normalize colors from either slide overrides or auto-sampled
+        const normalizedColors = {
+          text: slide.colors?.text || extractedColors?.text || 'rgb(109, 40, 217)',
+          background: slide.colors?.background || extractedColors?.light || 'rgb(243, 232, 255)',
+          accent: slide.colors?.accent || extractedColors?.dark || 'rgb(196, 181, 253)',
+        };
+        
         return (
           <>
             {/* Two-tone organic background */}
             <div 
               className="absolute inset-0" 
-              style={{ background: `linear-gradient(135deg, ${colors.light} 0%, ${colors.light} 100%)` }}
+              style={{ background: `linear-gradient(135deg, ${normalizedColors.background} 0%, ${normalizedColors.background} 100%)` }}
             />
             
             {/* Organic blob shapes */}
             <div 
               className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-60 blur-3xl"
-              style={{ backgroundColor: colors.dark, transform: 'translate(30%, -30%)' }}
+              style={{ backgroundColor: normalizedColors.accent, transform: 'translate(30%, -30%)' }}
             />
             <div 
               className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-50 blur-3xl"
-              style={{ backgroundColor: colors.dark, transform: 'translate(-25%, 25%)' }}
+              style={{ backgroundColor: normalizedColors.accent, transform: 'translate(-25%, 25%)' }}
             />
             
-            {/* Headline at top */}
+            {/* Headline at top - tighter spacing */}
             {hasOverlay && (
-              <div className="absolute top-12 left-0 right-0 px-10 z-20">
+              <div className="absolute top-6 left-0 right-0 px-10 z-20">
                 {overlay.headline && (
                   <h2 
-                    className={`text-3xl font-black leading-tight mb-3 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text }}
+                    className={`text-3xl font-black leading-tight mb-2 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text }}
                   >
                     {overlay.headline}
                   </h2>
                 )}
                 {overlay.subhead && (
                   <p 
-                    className={`text-base leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text, opacity: 0.8 }}
+                    className={`text-sm leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text, opacity: 0.8 }}
                   >
                     {overlay.subhead}
                   </p>
@@ -348,16 +354,20 @@ export default function SlideCard({
               </div>
             )}
             
-            {/* Phone frame with screenshot */}
+            {/* Phone frame with screenshot - larger, tighter positioning */}
             {imageUrl && (
-              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '160px' : '0' }}>
-                <div className="relative w-[58%] aspect-[9/19.5] bg-black rounded-[3rem] shadow-2xl overflow-hidden">
-                  <img
-                    src={imageUrl}
-                    alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                  />
+              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}>
+                {/* Realistic iPhone bezel - scaled to 74% width */}
+                <div className="relative w-[74%] aspect-[9/19.5] bg-black rounded-[2.5rem] shadow-2xl p-1">
+                  {/* Inner screen area with smaller radius */}
+                  <div className="relative w-full h-full bg-black rounded-[2.2rem] overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt={`Slide ${slide.id}`}
+                      className="w-full h-full object-contain"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -366,9 +376,9 @@ export default function SlideCard({
             {!imageUrl && (
               <div 
                 className="absolute inset-0 flex items-center justify-center text-gray-400"
-                style={{ paddingTop: hasOverlay ? '160px' : '0' }}
+                style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}
               >
-                <div className="w-[58%] aspect-[9/19.5] bg-gray-200 rounded-[3rem] flex items-center justify-center">
+                <div className="w-[74%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center">
                   <span className="text-sm">No screenshot</span>
                 </div>
               </div>
@@ -428,6 +438,112 @@ export default function SlideCard({
             {isLocked ? "🔒 Locked" : "🔓 Unlocked"}
           </button>
         </div>
+
+        {/* Color pickers for Perfect template */}
+        {slide.templateId === 'full_bleed_caption_bottom' && onColorChange && (
+          <div className="mb-3 pb-3 border-b border-gray-200">
+            <p className="text-xs font-medium text-gray-600 mb-2">Perfect Colors:</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Text:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.text || (extractedColors?.text || '#6d28d9')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, text: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Bg:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.background || (extractedColors?.light || '#f3e8ff')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, background: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Accent:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.accent || (extractedColors?.dark || '#c4b5fd')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              {slide.colors && (
+                <button
+                  onClick={() => {
+                    onColorChange(slide.id, {});
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  title="Reset to auto-sampled colors"
+                >
+                  Auto
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Color pickers for Growth template */}
+        {slide.templateId === 'caption_top' && slide.kind !== 'campaign' && onColorChange && (
+          <div className="mb-3 pb-3 border-b border-gray-200">
+            <p className="text-xs font-medium text-gray-600 mb-2">Growth Colors:</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Text:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.text || (extractedColors?.text || '#44403c')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, text: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Bg:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.background || (extractedColors?.light || '#f5f2ed')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, background: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Accent:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.accent || (extractedColors?.dark || '#a8a29e')}
+                  onChange={(e) => {
+                    onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              {slide.colors && (
+                <button
+                  onClick={() => {
+                    onColorChange(slide.id, {});
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  title="Reset to auto-sampled colors"
+                >
+                  Auto
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {slide.comments.length > 0 && (
           <div className="mt-3 space-y-2">

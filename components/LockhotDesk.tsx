@@ -105,7 +105,7 @@ export default function LockhotDesk() {
 
         return {
           id: index + 1,
-          templateId: "caption_top" as TemplateId,
+          templateId: "full_bleed_caption_bottom" as TemplateId,
           backgroundImage: '',
           imageKey,
           overlays: { en: { headline: '', subhead: '' } },
@@ -301,6 +301,7 @@ export default function LockhotDesk() {
     });
   };
 
+<<<<<<< HEAD
   const handleCampaignUpload = async (file: File) => {
     const imageKey = `campaign-${Date.now()}`;
     await saveImage(imageKey, file);
@@ -309,6 +310,29 @@ export default function LockhotDesk() {
       const updated = prev.map(s => {
         if (s.kind === "campaign") {
           return { ...s, imageKey, backgroundImage: '' };
+=======
+  const handleColorChange = (slideId: number, colors: { text?: string; background?: string; accent?: string }) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return { ...s, colors: Object.keys(colors).length > 0 ? colors : undefined };
+>>>>>>> origin/main
+        }
+        return s;
+      });
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
+  const handleColorChange = (slideId: number, colors: { text?: string; background?: string; accent?: string }) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return { ...s, colors };
         }
         return s;
       });
@@ -715,6 +739,7 @@ export default function LockhotDesk() {
             currentLocale={currentLocale}
             onToggleLock={toggleLock}
             onFileUpload={(file) => handleFileUpload(slide.id, file)}
+            onColorChange={handleColorChange}
           />
         ))}
       </div>
@@ -765,6 +790,7 @@ export default function LockhotDesk() {
                 currentLocale={currentLocale}
                 onToggleLock={toggleLock}
                 onFileUpload={handleCampaignUpload}
+                onColorChange={handleColorChange}
               />
             )}
           </div>

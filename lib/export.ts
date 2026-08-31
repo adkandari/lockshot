@@ -47,7 +47,21 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     // Extract colors for Perfect and Growth if needed
     let extractedColors = null;
     if ((slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top' || slide.kind === 'campaign') && screenshotImg) {
-      extractedColors = await extractDominantColor(screenshotImg);
+      // Use slide override colors or extract from image
+      if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
+        extractedColors = {
+          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#44403c' : '#6d28d9'),
+          light: slide.colors.background || (slide.templateId === 'caption_top' ? '#f5f2ed' : '#f3e8ff'),
+          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#a8a29e' : '#c4b5fd'),
+        };
+      } else {
+        extractedColors = await extractDominantColor(screenshotImg);
+      }
+    }
+
+    // Wait for fonts to be ready before rendering
+    if (typeof document !== 'undefined' && document.fonts) {
+      await document.fonts.ready;
     }
 
     await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind);
@@ -289,7 +303,27 @@ async function renderTemplate(
         ctx.clip();
         ctx.fillStyle = "#000000";
         ctx.fill();
-        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        
+        // Object-contain with letterbox
+        const imgAspect = img.width / img.height;
+        const frameAspect = frameWidth / frameHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        if (imgAspect > frameAspect) {
+          // Image is wider than frame
+          drawWidth = frameWidth;
+          drawHeight = frameWidth / imgAspect;
+          drawX = frameX;
+          drawY = frameY + (frameHeight - drawHeight) / 2;
+        } else {
+          // Image is taller than frame
+          drawHeight = frameHeight;
+          drawWidth = frameHeight * imgAspect;
+          drawX = frameX + (frameWidth - drawWidth) / 2;
+          drawY = frameY;
+        }
+        
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
         ctx.restore();
       }
       break;
@@ -420,10 +454,10 @@ async function renderTemplate(
       
       ctx.globalAlpha = 1.0;
       
-      // 3. Draw headline at top
+      // 3. Draw headline at top - tighter spacing
       if (hasOverlay && overlay) {
         const textPadding = 100;
-        let textY = 120;
+        let textY = 60;
         
         if (overlay.headline) {
           ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
@@ -431,41 +465,68 @@ async function renderTemplate(
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
-          textY += 160;
+          textY += 140;
         }
         
         if (overlay.subhead) {
-          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = colors.text;
           ctx.globalAlpha = 0.8;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 80);
+          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 70);
           ctx.globalAlpha = 1.0;
         }
       }
       
-      // 4. Draw phone frame with screenshot
+      // 4. Draw phone frame with screenshot - 74% width, tighter positioning, contain
       if (img) {
-        const frameWidth = width * 0.58;
+        const frameWidth = width * 0.74;
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
-        const frameY = hasOverlay ? 580 : (height - frameHeight) / 2;
-        const frameRadius = 96;
+        const frameY = hasOverlay ? 350 : (height - frameHeight) / 2;
+        const frameRadius = 80;
+        const bezelWidth = 4;
         
-        // Shadow
+        // Outer bezel (realistic iPhone bezel)
         ctx.save();
+        ctx.fillStyle = "#000000";
         ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
         ctx.shadowBlur = 80;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 40;
-        
         ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+        roundRect(ctx, frameX - bezelWidth, frameY - bezelWidth, frameWidth + bezelWidth * 2, frameHeight + bezelWidth * 2, frameRadius);
+        ctx.fill();
+        
+        // Inner screen area
+        ctx.shadowColor = "transparent";
+        ctx.beginPath();
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth);
         ctx.clip();
         ctx.fillStyle = "#000000";
         ctx.fill();
-        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        
+        // Object-contain with letterbox
+        const imgAspect = img.width / img.height;
+        const frameAspect = frameWidth / frameHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        if (imgAspect > frameAspect) {
+          // Image is wider than frame
+          drawWidth = frameWidth;
+          drawHeight = frameWidth / imgAspect;
+          drawX = frameX;
+          drawY = frameY + (frameHeight - drawHeight) / 2;
+        } else {
+          // Image is taller than frame
+          drawHeight = frameHeight;
+          drawWidth = frameHeight * imgAspect;
+          drawX = frameX + (frameWidth - drawWidth) / 2;
+          drawY = frameY;
+        }
+        
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
         ctx.restore();
       }
       break;

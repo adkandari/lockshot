@@ -527,6 +527,76 @@ export async function registerWebMCPTools(
       },
     },
     {
+      name: "set_slide_colors",
+      description: "Set custom colors for a slide's Kova template (full_bleed_caption_bottom). Overrides auto-sampled colors. Does not affect locked slides. Use RGB hex format (#RRGGBB).",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          slide: {
+            type: "number",
+            description: "Slide ID (1-5)",
+          },
+          text: {
+            type: "string",
+            description: "Text color (hex, e.g. #6d28d9). Used for headline and subhead.",
+          },
+          background: {
+            type: "string",
+            description: "Background color (hex, e.g. #f3e8ff). Light variant for canvas fill.",
+          },
+          accent: {
+            type: "string",
+            description: "Accent color (hex, e.g. #c4b5fd). Dark variant for organic blobs.",
+          },
+        },
+        required: ["slide"],
+        additionalProperties: false,
+      },
+      execute: async (params: Record<string, unknown>) => {
+        const slideId = params.slide as number;
+        const text = params.text as string | undefined;
+        const background = params.background as string | undefined;
+        const accent = params.accent as string | undefined;
+
+        const currentSlides = getSlidesRef();
+        const slide = currentSlides.find(s => s.id === slideId);
+        
+        if (!slide) {
+          return { success: false, error: "Slide not found" };
+        }
+
+        if (slide.locked) {
+          return {
+            success: false,
+            error: `Slide ${slideId} is locked`,
+            locked: true,
+          };
+        }
+
+        const colors: { text?: string; background?: string; accent?: string } = {};
+        if (text) colors.text = text;
+        if (background) colors.background = background;
+        if (accent) colors.accent = accent;
+
+        setSlides(prev => prev.map(s => {
+          if (s.id === slideId) {
+            return {
+              ...s,
+              colors: Object.keys(colors).length > 0 ? { ...s.colors, ...colors } : s.colors,
+            };
+          }
+          return s;
+        }));
+
+        return {
+          success: true,
+          slideId,
+          colors,
+          message: `Set colors for slide ${slideId}: ${Object.keys(colors).join(', ')}`,
+        };
+      },
+    },
+    {
       name: "export_zip",
       description: "Export the current locale's slides as a ZIP of 1320x2868 PNG files (no alpha channel, sRGB)",
       inputSchema: {
