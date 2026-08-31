@@ -39,7 +39,16 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     // Extract colors for Kova if needed
     let kovaColors = null;
     if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
-      kovaColors = await extractDominantColor(screenshotImg);
+      // Use slide override colors or extract from image
+      if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
+        kovaColors = {
+          text: slide.colors.text || '#6d28d9',
+          light: slide.colors.background || '#f3e8ff',
+          dark: slide.colors.accent || '#c4b5fd',
+        };
+      } else {
+        kovaColors = await extractDominantColor(screenshotImg);
+      }
     }
 
     await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, kovaColors);
@@ -294,27 +303,64 @@ async function renderTemplate(
         }
       }
       
-      // 4. Draw phone frame with screenshot
+      // 4. Draw realistic phone frame with screenshot
       if (img) {
         const frameWidth = width * 0.58;
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
         const frameY = hasOverlay ? 580 : (height - frameHeight) / 2;
-        const frameRadius = 96;
+        const outerRadius = 40; // Realistic 6.9" bezel
+        const bezelThickness = 8;
+        const innerRadius = 35;
         
-        // Shadow
+        // Outer frame with shadow
         ctx.save();
         ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
         ctx.shadowBlur = 80;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 40;
         
-        ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
-        ctx.clip();
         ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, outerRadius);
         ctx.fill();
-        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        ctx.restore();
+        
+        // Inner screen area with letterboxed screenshot (object-contain)
+        ctx.save();
+        const innerX = frameX + bezelThickness;
+        const innerY = frameY + bezelThickness;
+        const innerWidth = frameWidth - bezelThickness * 2;
+        const innerHeight = frameHeight - bezelThickness * 2;
+        
+        ctx.beginPath();
+        roundRect(ctx, innerX, innerY, innerWidth, innerHeight, innerRadius);
+        ctx.clip();
+        
+        // Black background for letterboxing
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
+        
+        // Calculate contain scaling
+        const imgAspect = img.width / img.height;
+        const boxAspect = innerWidth / innerHeight;
+        let drawWidth, drawHeight, drawX, drawY;
+        
+        if (imgAspect > boxAspect) {
+          // Image wider than box - fit to width
+          drawWidth = innerWidth;
+          drawHeight = innerWidth / imgAspect;
+          drawX = innerX;
+          drawY = innerY + (innerHeight - drawHeight) / 2;
+        } else {
+          // Image taller than box - fit to height
+          drawHeight = innerHeight;
+          drawWidth = innerHeight * imgAspect;
+          drawX = innerX + (innerWidth - drawWidth) / 2;
+          drawY = innerY;
+        }
+        
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
         ctx.restore();
       }
       break;

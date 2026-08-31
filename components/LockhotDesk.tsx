@@ -272,6 +272,22 @@ export default function LockhotDesk() {
     });
   };
 
+  const handleColorChange = (slideId: number, colors: { text?: string; background?: string; accent?: string }) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return { ...s, colors: Object.keys(colors).length > 0 ? colors : undefined };
+        }
+        return s;
+      });
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
   const handleStartOver = () => {
     setCurrentProject(null);
     setSlides([]);
@@ -604,6 +620,7 @@ export default function LockhotDesk() {
             currentLocale={currentLocale}
             onToggleLock={toggleLock}
             onFileUpload={(file) => handleFileUpload(slide.id, file)}
+            onColorChange={handleColorChange}
           />
         ))}
       </div>
