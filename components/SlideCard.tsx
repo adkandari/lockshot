@@ -10,6 +10,7 @@ interface SlideCardProps {
   currentLocale: Locale;
   onToggleLock: (slideId: number) => void;
   onFileUpload: (file: File) => void;
+  onColorChange?: (slideId: number, colors: { text?: string; background?: string; accent?: string }) => void;
 }
 
 export default function SlideCard({
@@ -17,6 +18,7 @@ export default function SlideCard({
   currentLocale,
   onToggleLock,
   onFileUpload,
+  onColorChange,
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
