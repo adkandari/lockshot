@@ -10,20 +10,20 @@ export function measureOverflow(overlay: SlideOverlay): boolean {
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
 
-  // Updated for Kova top caption (Pluto/Astra use different areas)
+  // Updated for tighter Kova top caption
   const boxWidth = EXPORT_WIDTH - 200; // 100px padding on each side
-  const boxHeight = 320; // Top caption area
+  const boxHeight = 240; // Tighter caption height (was 320)
   const maxWidth = boxWidth * 0.95;
 
   const headlineFontSize = 120;
   ctx.font = `900 ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
   const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, headlineFontSize * 1.15);
 
-  const subheadFontSize = 64;
+  const subheadFontSize = 56; // Reduced from 64
   ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
   const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
 
-  const totalHeight = headlineHeight + subheadHeight + 60; // padding between headline/subhead
+  const totalHeight = headlineHeight + subheadHeight + 40;
   const availableHeight = boxHeight;
 
   return totalHeight > availableHeight;

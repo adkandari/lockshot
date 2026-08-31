@@ -278,10 +278,10 @@ async function renderTemplate(
       
       ctx.globalAlpha = 1.0;
       
-      // 3. Draw headline at top
+      // 3. Draw headline at top - tighter spacing
       if (hasOverlay && overlay) {
         const textPadding = 100;
-        let textY = 120;
+        let textY = 60; // Reduced from 120
         
         if (overlay.headline) {
           ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
@@ -289,27 +289,27 @@ async function renderTemplate(
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
-          textY += 160;
+          textY += 150; // Reduced spacing
         }
         
         if (overlay.subhead) {
-          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
           ctx.fillStyle = colors.text;
           ctx.globalAlpha = 0.8;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 80);
+          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 70);
           ctx.globalAlpha = 1.0;
         }
       }
       
-      // 4. Draw realistic phone frame with screenshot
+      // 4. Draw larger phone frame with screenshot
       if (img) {
-        const frameWidth = width * 0.58;
+        const frameWidth = width * 0.74; // Increased from 0.58
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
-        const frameY = hasOverlay ? 580 : (height - frameHeight) / 2;
-        const outerRadius = 40; // Realistic 6.9" bezel
+        const frameY = hasOverlay ? 340 : (height - frameHeight) / 2; // Tighter - reduced from 580
+        const outerRadius = 40;
         const bezelThickness = 8;
         const innerRadius = 35;
         
