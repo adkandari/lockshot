@@ -10,7 +10,15 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
   const zip = new JSZip();
   const safeProjectName = projectName.toLowerCase().replace(/\s+/g, '-');
 
-  for (const slide of slides) {
+  // Filter out empty campaign slides
+  const slidesToExport = slides.filter(slide => {
+    if (slide.kind === "campaign" && !slide.imageKey && !slide.backgroundImage) {
+      return false;
+    }
+    return true;
+  });
+
+  for (const slide of slidesToExport) {
     const canvas = document.createElement("canvas");
     canvas.width = EXPORT_WIDTH;
     canvas.height = EXPORT_HEIGHT;
@@ -36,22 +44,27 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    // Extract colors for Kova if needed
-    let kovaColors = null;
-    if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
+    // Extract colors for Perfect and Growth if needed
+    let extractedColors = null;
+    if ((slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top' || slide.kind === 'campaign') && screenshotImg) {
       // Use slide override colors or extract from image
       if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
-        kovaColors = {
-          text: slide.colors.text || '#6d28d9',
-          light: slide.colors.background || '#f3e8ff',
-          dark: slide.colors.accent || '#c4b5fd',
+        extractedColors = {
+          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#44403c' : '#6d28d9'),
+          light: slide.colors.background || (slide.templateId === 'caption_top' ? '#f5f2ed' : '#f3e8ff'),
+          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#a8a29e' : '#c4b5fd'),
         };
       } else {
-        kovaColors = await extractDominantColor(screenshotImg);
+        extractedColors = await extractDominantColor(screenshotImg);
       }
     }
 
-    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, kovaColors);
+    // Wait for fonts to be ready before rendering
+    if (typeof document !== 'undefined' && document.fonts) {
+      await document.fonts.ready;
+    }
+
+    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -84,71 +97,234 @@ async function renderTemplate(
   img: HTMLImageElement | null,
   overlay: { headline: string; subhead: string } | undefined,
   hasOverlay: boolean,
-  kovaColors?: { light: string; dark: string; text: string } | null
+  extractedColors?: { light: string; dark: string; text: string } | null,
+  slideKind?: "campaign" | "product"
 ) {
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
 
+  // Special case: Campaign slide for Growth template
+  if (slideKind === "campaign") {
+    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+    
+    // 1. Fill with cream background
+    ctx.fillStyle = colors.light;
+    ctx.fillRect(0, 0, width, height);
+    
+    // 2. Draw organic blobs
+    ctx.globalAlpha = 0.35;
+    const blobTopRight = ctx.createRadialGradient(width * 0.85, height * 0.15, 0, width * 0.85, height * 0.15, width * 0.3);
+    blobTopRight.addColorStop(0, colors.dark);
+    blobTopRight.addColorStop(1, 'transparent');
+    ctx.fillStyle = blobTopRight;
+    ctx.beginPath();
+    ctx.arc(width * 0.85, height * 0.15, width * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.globalAlpha = 0.3;
+    const blobBottomLeft = ctx.createRadialGradient(width * 0.15, height * 0.85, 0, width * 0.15, height * 0.85, width * 0.27);
+    blobBottomLeft.addColorStop(0, colors.dark);
+    blobBottomLeft.addColorStop(1, 'transparent');
+    ctx.fillStyle = blobBottomLeft;
+    ctx.beginPath();
+    ctx.arc(width * 0.15, height * 0.85, width * 0.27, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.globalAlpha = 1.0;
+    
+    // 3. Draw stacked headline with last word in accent
+    if (hasOverlay && overlay && overlay.headline) {
+      const words = overlay.headline.split(/\s+/);
+      const lastWord = words[words.length - 1];
+      const otherWords = words.slice(0, -1).join(' ');
+      
+      const textX = 100;
+      let textY = 120;
+      
+      ctx.font = `900 130px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      
+      if (otherWords) {
+        ctx.fillStyle = colors.text;
+        wrapText(ctx, otherWords.toLowerCase(), textX, textY, width - 200, 150);
+        textY += 150;
+      }
+      
+      // Last word in accent with squiggle
+      ctx.fillStyle = colors.dark;
+      ctx.fillText(lastWord.toLowerCase(), textX, textY);
+      
+      // Draw squiggle underline
+      const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
+      ctx.strokeStyle = colors.dark;
+      ctx.lineWidth = 8;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(textX, textY + 145);
+      ctx.bezierCurveTo(
+        textX + textWidth * 0.25, textY + 135,
+        textX + textWidth * 0.5, textY + 155,
+        textX + textWidth * 0.75, textY + 145
+      );
+      ctx.bezierCurveTo(
+        textX + textWidth * 0.875, textY + 140,
+        textX + textWidth, textY + 145,
+        textX + textWidth, textY + 145
+      );
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      
+      textY += 180;
+      
+      // Subhead
+      if (overlay.subhead) {
+        ctx.font = `56px Georgia, "Source Serif 4", serif`;
+        ctx.fillStyle = colors.text;
+        ctx.globalAlpha = 0.75;
+        wrapText(ctx, overlay.subhead, textX, textY, width - 200, 70);
+        ctx.globalAlpha = 1.0;
+      }
+    }
+    
+    // 4. Draw lifestyle photo in rounded rect on right/bottom
+    if (img) {
+      const photoWidth = width * 0.5;
+      const photoHeight = height * 0.67;
+      const photoX = width - photoWidth - 80;
+      const photoY = height - photoHeight - 100;
+      const photoRadius = 96;
+      
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+      ctx.shadowBlur = 60;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 30;
+      
+      ctx.beginPath();
+      roundRect(ctx, photoX, photoY, photoWidth, photoHeight, photoRadius);
+      ctx.clip();
+      ctx.drawImage(img, photoX, photoY, photoWidth, photoHeight);
+      ctx.restore();
+    }
+    
+    return;
+  }
+
   switch (templateId) {
-    case "caption_top": // Pluto: Clean SaaS blue/white
+    case "caption_top": // Growth: Cream campaign energy with top type
+      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      
+      // 1. Fill with warm cream background
+      ctx.fillStyle = growthColors.light;
+      ctx.fillRect(0, 0, width, height);
+      
+      // 2. Draw soft organic blobs in corners
+      ctx.fillStyle = growthColors.dark;
+      ctx.globalAlpha = 0.4;
+      
+      // Top-left blob
+      const blob1X = width * 0.15;
+      const blob1Y = height * 0.1;
+      const blob1R = width * 0.25;
+      const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
+      gradient1.addColorStop(0, growthColors.dark);
+      gradient1.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient1;
+      ctx.beginPath();
+      ctx.arc(blob1X, blob1Y, blob1R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Bottom-right blob
+      ctx.globalAlpha = 0.3;
+      const blob2X = width * 0.85;
+      const blob2Y = height * 0.9;
+      const blob2R = width * 0.22;
+      const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
+      gradient2.addColorStop(0, growthColors.dark);
+      gradient2.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient2;
+      ctx.beginPath();
+      ctx.arc(blob2X, blob2Y, blob2R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.globalAlpha = 1.0;
+      
+      // 3. Draw type at the TOP
       if (hasOverlay && overlay) {
-        const captionHeight = 380;
+        const textPadding = 80;
+        let textY = 100;
         
-        // Bright blue gradient for clean SaaS look
-        const gradient = ctx.createLinearGradient(0, 0, width, captionHeight);
-        gradient.addColorStop(0, "#0ea5e9"); // sky-500
-        gradient.addColorStop(0.5, "#3b82f6"); // blue-500
-        gradient.addColorStop(1, "#06b6d4"); // cyan-500
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, captionHeight);
-
-        const padding = 100;
-        let currentY = padding + 20;
-
         if (overlay.headline) {
-          ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#ffffff";
+          ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.fillStyle = growthColors.text;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 140);
-          currentY += 160;
+          wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);
+          textY += 150;
         }
-
+        
         if (overlay.subhead) {
-          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+          // Try to load serif font for subhead
+          ctx.font = `58px Georgia, "Source Serif 4", serif`;
+          ctx.fillStyle = growthColors.text;
+          ctx.globalAlpha = 0.85;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 80);
+          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 72);
+          ctx.globalAlpha = 1.0;
         }
       }
-
+      
+      // 4. Draw thin-bezel phone frame centered in lower portion
       if (img) {
-        const imgY = hasOverlay ? 420 : 0;
-        const imgHeight = hasOverlay ? height - 480 : height;
-        const imgX = hasOverlay ? 60 : 0;
-        const imgWidth = hasOverlay ? width - 120 : width;
+        const frameWidth = width * 0.70;
+        const frameHeight = frameWidth * (19.5 / 9);
+        const frameX = (width - frameWidth) / 2;
+        const frameY = hasOverlay ? 500 : (height - frameHeight) / 2;
+        const frameRadius = 64;
+        const bezelWidth = 8;
         
-        if (hasOverlay) {
-          // White background behind rounded image
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, imgY - 40, width, height - imgY + 40);
-          
-          // Draw rounded image with shadow
-          ctx.save();
-          const radius = 48;
-          ctx.beginPath();
-          roundRect(ctx, imgX, imgY, imgWidth, imgHeight, radius);
-          ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
-          ctx.shadowBlur = 60;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 20;
-          ctx.clip();
-          ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-          ctx.restore();
+        // Outer bezel
+        ctx.save();
+        ctx.fillStyle = "#1a1a1a";
+        ctx.beginPath();
+        roundRect(ctx, frameX - bezelWidth, frameY - bezelWidth, frameWidth + bezelWidth * 2, frameHeight + bezelWidth * 2, frameRadius);
+        ctx.fill();
+        
+        // Inner screen with shadow
+        ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 20;
+        
+        ctx.beginPath();
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth / 2);
+        ctx.clip();
+        ctx.fillStyle = "#000000";
+        ctx.fill();
+        
+        // Object-contain with letterbox
+        const imgAspect = img.width / img.height;
+        const frameAspect = frameWidth / frameHeight;
+        
+        let drawWidth, drawHeight, drawX, drawY;
+        if (imgAspect > frameAspect) {
+          // Image is wider than frame
+          drawWidth = frameWidth;
+          drawHeight = frameWidth / imgAspect;
+          drawX = frameX;
+          drawY = frameY + (frameHeight - drawHeight) / 2;
         } else {
-          ctx.drawImage(img, 0, 0, width, height);
+          // Image is taller than frame
+          drawHeight = frameHeight;
+          drawWidth = frameHeight * imgAspect;
+          drawX = frameX + (frameWidth - drawWidth) / 2;
+          drawY = frameY;
         }
+        
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        ctx.restore();
       }
       break;
 
@@ -239,9 +415,9 @@ async function renderTemplate(
       }
       break;
 
-    case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
+    case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
     default:
-      const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+      const colors = extractedColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
       
       // 1. Fill with light background
       ctx.fillStyle = colors.light;
@@ -251,29 +427,29 @@ async function renderTemplate(
       ctx.fillStyle = colors.dark;
       ctx.globalAlpha = 0.6;
       
-      // Top-right blob
-      const blob1X = width * 0.85;
-      const blob1Y = height * 0.1;
-      const blob1R = width * 0.35;
-      const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
-      gradient1.addColorStop(0, colors.dark);
-      gradient1.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient1;
+      // Top-right blob (Perfect template)
+      const perfectBlob1X = width * 0.85;
+      const perfectBlob1Y = height * 0.1;
+      const perfectBlob1R = width * 0.35;
+      const perfectGradient1 = ctx.createRadialGradient(perfectBlob1X, perfectBlob1Y, 0, perfectBlob1X, perfectBlob1Y, perfectBlob1R);
+      perfectGradient1.addColorStop(0, colors.dark);
+      perfectGradient1.addColorStop(1, 'transparent');
+      ctx.fillStyle = perfectGradient1;
       ctx.beginPath();
-      ctx.arc(blob1X, blob1Y, blob1R, 0, Math.PI * 2);
+      ctx.arc(perfectBlob1X, perfectBlob1Y, perfectBlob1R, 0, Math.PI * 2);
       ctx.fill();
       
-      // Bottom-left blob
+      // Bottom-left blob (Perfect template)
       ctx.globalAlpha = 0.5;
-      const blob2X = width * 0.15;
-      const blob2Y = height * 0.9;
-      const blob2R = width * 0.3;
-      const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
-      gradient2.addColorStop(0, colors.dark);
-      gradient2.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient2;
+      const perfectBlob2X = width * 0.15;
+      const perfectBlob2Y = height * 0.9;
+      const perfectBlob2R = width * 0.3;
+      const perfectGradient2 = ctx.createRadialGradient(perfectBlob2X, perfectBlob2Y, 0, perfectBlob2X, perfectBlob2Y, perfectBlob2R);
+      perfectGradient2.addColorStop(0, colors.dark);
+      perfectGradient2.addColorStop(1, 'transparent');
+      ctx.fillStyle = perfectGradient2;
       ctx.beginPath();
-      ctx.arc(blob2X, blob2Y, blob2R, 0, Math.PI * 2);
+      ctx.arc(perfectBlob2X, perfectBlob2Y, perfectBlob2R, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.globalAlpha = 1.0;
@@ -281,7 +457,7 @@ async function renderTemplate(
       // 3. Draw headline at top - tighter spacing
       if (hasOverlay && overlay) {
         const textPadding = 100;
-        let textY = 60; // Reduced from 120
+        let textY = 60;
         
         if (overlay.headline) {
           ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
@@ -289,7 +465,7 @@ async function renderTemplate(
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
-          textY += 150; // Reduced spacing
+          textY += 140;
         }
         
         if (overlay.subhead) {
@@ -303,61 +479,51 @@ async function renderTemplate(
         }
       }
       
-      // 4. Draw larger phone frame with screenshot
+      // 4. Draw phone frame with screenshot - 74% width, tighter positioning, contain
       if (img) {
-        const frameWidth = width * 0.74; // Increased from 0.58
+        const frameWidth = width * 0.74;
         const frameHeight = frameWidth * (19.5 / 9);
         const frameX = (width - frameWidth) / 2;
-        const frameY = hasOverlay ? 340 : (height - frameHeight) / 2; // Tighter - reduced from 580
-        const outerRadius = 40;
-        const bezelThickness = 8;
-        const innerRadius = 35;
+        const frameY = hasOverlay ? 350 : (height - frameHeight) / 2;
+        const frameRadius = 80;
+        const bezelWidth = 4;
         
-        // Outer frame with shadow
+        // Outer bezel (realistic iPhone bezel)
         ctx.save();
+        ctx.fillStyle = "#000000";
         ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
         ctx.shadowBlur = 80;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 40;
-        
-        ctx.fillStyle = "#000000";
         ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, outerRadius);
+        roundRect(ctx, frameX - bezelWidth, frameY - bezelWidth, frameWidth + bezelWidth * 2, frameHeight + bezelWidth * 2, frameRadius);
         ctx.fill();
-        ctx.restore();
         
-        // Inner screen area with letterboxed screenshot (object-contain)
-        ctx.save();
-        const innerX = frameX + bezelThickness;
-        const innerY = frameY + bezelThickness;
-        const innerWidth = frameWidth - bezelThickness * 2;
-        const innerHeight = frameHeight - bezelThickness * 2;
-        
+        // Inner screen area
+        ctx.shadowColor = "transparent";
         ctx.beginPath();
-        roundRect(ctx, innerX, innerY, innerWidth, innerHeight, innerRadius);
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth);
         ctx.clip();
-        
-        // Black background for letterboxing
         ctx.fillStyle = "#000000";
-        ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
+        ctx.fill();
         
-        // Calculate contain scaling
+        // Object-contain with letterbox
         const imgAspect = img.width / img.height;
-        const boxAspect = innerWidth / innerHeight;
-        let drawWidth, drawHeight, drawX, drawY;
+        const frameAspect = frameWidth / frameHeight;
         
-        if (imgAspect > boxAspect) {
-          // Image wider than box - fit to width
-          drawWidth = innerWidth;
-          drawHeight = innerWidth / imgAspect;
-          drawX = innerX;
-          drawY = innerY + (innerHeight - drawHeight) / 2;
+        let drawWidth, drawHeight, drawX, drawY;
+        if (imgAspect > frameAspect) {
+          // Image is wider than frame
+          drawWidth = frameWidth;
+          drawHeight = frameWidth / imgAspect;
+          drawX = frameX;
+          drawY = frameY + (frameHeight - drawHeight) / 2;
         } else {
-          // Image taller than box - fit to height
-          drawHeight = innerHeight;
-          drawWidth = innerHeight * imgAspect;
-          drawX = innerX + (innerWidth - drawWidth) / 2;
-          drawY = innerY;
+          // Image is taller than frame
+          drawHeight = frameHeight;
+          drawWidth = frameHeight * imgAspect;
+          drawX = frameX + (frameWidth - drawWidth) / 2;
+          drawY = frameY;
         }
         
         ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);

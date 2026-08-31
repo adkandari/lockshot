@@ -31,8 +31,8 @@ const COMMON_LOCALES = [
 ];
 
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
-  { id: "full_bleed_caption_bottom", name: "Kova", description: "Vibrant purple gradient with bold headlines" },
-  { id: "caption_top", name: "Pluto", description: "Clean blue and white SaaS style" },
+  { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
+  { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
   { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
 ];
 
@@ -112,6 +112,7 @@ export default function LockhotDesk() {
           locked: false,
           comments: [],
           overflow: { en: false },
+          kind: "product" as const,
         };
       })
     );
@@ -187,11 +188,39 @@ export default function LockhotDesk() {
 
   const handleSetTemplate = (template: TemplateId, slideId?: number) => {
     setSlides(prev => {
-      const updated = prev.map(s => {
+      let updated = prev.map(s => {
         if (slideId && s.id !== slideId) return s;
         if (!slideId && s.locked) return s;
         return { ...s, templateId: template };
       });
+      
+      // Handle campaign slide for Growth template
+      if (template === "caption_top" && !slideId) {
+        // Add empty campaign slide if it doesn't exist
+        const hasCampaign = updated.some(s => s.kind === "campaign");
+        if (!hasCampaign) {
+          const campaignSlide: SlideData = {
+            id: 0,
+            templateId: "caption_top",
+            backgroundImage: '',
+            overlays: { en: { headline: '', subhead: '' } },
+            locked: false,
+            comments: [],
+            overflow: { en: false },
+            kind: "campaign",
+          };
+          // Add campaign slide at the start, renumber existing slides
+          updated = [campaignSlide, ...updated.map((s, i) => ({ ...s, id: i + 1 }))];
+        }
+      } else if (template !== "caption_top" && !slideId) {
+        // Remove empty campaign slide when switching away from Growth
+        updated = updated.filter(s => {
+          if (s.kind === "campaign" && !s.imageKey && !s.backgroundImage) {
+            return false;
+          }
+          return true;
+        });
+      }
       
       if (currentProject) {
         const updatedProject = { ...currentProject, slides: updated };
@@ -272,11 +301,30 @@ export default function LockhotDesk() {
     });
   };
 
+  const handleCampaignUpload = async (file: File) => {
+    const imageKey = `campaign-${Date.now()}`;
+    await saveImage(imageKey, file);
+    
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.kind === "campaign") {
+          return { ...s, imageKey, backgroundImage: '' };
+        }
+        return s;
+      });
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
   const handleColorChange = (slideId: number, colors: { text?: string; background?: string; accent?: string }) => {
     setSlides(prev => {
       const updated = prev.map(s => {
         if (s.id === slideId) {
-          return { ...s, colors: Object.keys(colors).length > 0 ? colors : undefined };
+          return { ...s, colors };
         }
         return s;
       });
@@ -302,7 +350,15 @@ export default function LockhotDesk() {
   };
 
   const handleWriteHeadlines = async () => {
-    const prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
+    const hasGrowth = slides.some(s => s.templateId === "caption_top");
+    const hasCampaign = slides.some(s => s.kind === "campaign");
+    const campaignEmpty = hasCampaign && !slides.find(s => s.kind === "campaign")?.imageKey;
+    
+    let prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
+    
+    if (hasGrowth && campaignEmpty) {
+      prompt += "\n\nIMPORTANT: This project uses the Growth template with an optional campaign slide. The campaign slide needs a lifestyle photo. Please also generate one vertical (9:16 or similar) photorealistic lifestyle photo that matches the app's aesthetic — warm cream studio, organic feel, no UI elements, no text overlays. The user will drop this generated image on the campaign slide. Describe the photo you want generated so the user can paste your description into DALL-E or similar.";
+    }
     
     // Try 1: ChatGPT Apps sendFollowUpMessage
     if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
@@ -339,6 +395,51 @@ export default function LockhotDesk() {
     try {
       await navigator.clipboard.writeText(prompt);
       setCopyToast("Copied — paste it in the ChatGPT chat");
+      setTimeout(() => setCopyToast(""), 3000);
+    } catch (e) {
+      setCopyToast("Failed to copy");
+      setTimeout(() => setCopyToast(""), 3000);
+    }
+  };
+
+  const handleGenerateCampaignPhoto = async () => {
+    const prompt = "Generate a vertical (9:16 aspect ratio) photorealistic lifestyle photo for an app marketing campaign. Style: warm cream/beige studio background, organic natural feel, soft lighting, minimalist composition. NO user interface elements, NO text overlays, NO devices. Think elegant product photography meets lifestyle brand aesthetic. The photo should complement a modern productivity/wellness app.";
+    
+    // Try sendFollowUpMessage
+    if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
+      try {
+        await (window as any).openai.sendFollowUpMessage({ prompt });
+        setCopyToast("Image generation request sent to chat");
+        setTimeout(() => setCopyToast(""), 3000);
+        return;
+      } catch (e) {
+        console.log("sendFollowUpMessage failed");
+      }
+    }
+    
+    // Try postMessage
+    if (typeof window !== 'undefined' && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          jsonrpc: "2.0",
+          method: "ui/message",
+          params: {
+            role: "user",
+            content: [{ type: "text", text: prompt }]
+          }
+        }, "*");
+        setCopyToast("Image generation request sent to chat");
+        setTimeout(() => setCopyToast(""), 3000);
+        return;
+      } catch (e) {
+        console.log("postMessage failed");
+      }
+    }
+    
+    // Fallback: clipboard
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopyToast("Copied image prompt — paste it in ChatGPT");
       setTimeout(() => setCopyToast(""), 3000);
     } catch (e) {
       setCopyToast("Failed to copy");
@@ -570,6 +671,16 @@ export default function LockhotDesk() {
               ✏️ Write Headlines
             </button>
 
+            {slides.some(s => s.kind === "campaign" && !s.imageKey) && (
+              <button
+                onClick={handleGenerateCampaignPhoto}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                title="Generate a lifestyle photo for the campaign slide"
+              >
+                🖼️ Generate Campaign Photo
+              </button>
+            )}
+
             <button
               onClick={handleExport}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -613,7 +724,7 @@ export default function LockhotDesk() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {slides.map((slide) => (
+        {slides.filter(s => s.kind !== "campaign").map((slide) => (
           <SlideCard
             key={slide.id}
             slide={slide}
@@ -624,6 +735,59 @@ export default function LockhotDesk() {
           />
         ))}
       </div>
+      
+      {/* Campaign slide section for Growth template */}
+      {slides.some(s => s.templateId === "caption_top") && (() => {
+        const campaignSlide = slides.find(s => s.kind === "campaign");
+        if (!campaignSlide) return null;
+        
+        return (
+          <div className="mt-8 border-t-2 border-gray-200 pt-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              📸 Campaign / Lifestyle Slide (Growth only)
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Optional marketing slide that appears first in your export. Drop a ChatGPT-generated lifestyle photo here.
+            </p>
+            
+            {!campaignSlide.imageKey && !campaignSlide.backgroundImage ? (
+              <div
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file && file.type.startsWith('image/')) {
+                    handleCampaignUpload(file);
+                  }
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) handleCampaignUpload(file);
+                  };
+                  input.click();
+                }}
+                className="border-4 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all"
+              >
+                <div className="text-5xl mb-3">🖼️</div>
+                <p className="text-lg font-medium text-gray-700">Drop a ChatGPT-generated lifestyle photo</p>
+                <p className="text-sm text-gray-500 mt-2">Click to select or drag and drop</p>
+              </div>
+            ) : (
+              <SlideCard
+                slide={campaignSlide}
+                currentLocale={currentLocale}
+                onToggleLock={toggleLock}
+                onFileUpload={handleCampaignUpload}
+                onColorChange={handleColorChange}
+              />
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

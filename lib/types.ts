@@ -20,6 +20,7 @@ export interface SlideData {
   locked: boolean;
   comments: string[];
   overflow: Record<Locale, boolean>;
+  kind?: "campaign" | "product";
   colors?: {
     text?: string;
     background?: string;
