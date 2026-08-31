@@ -195,12 +195,12 @@ export default function SlideCard({
               style={{ backgroundColor: normalizedColors.accent, transform: 'translate(-25%, 25%)' }}
             />
             
-            {/* Headline at top */}
+            {/* Headline at top - tighter spacing */}
             {hasOverlay && (
-              <div className="absolute top-12 left-0 right-0 px-10 z-20">
+              <div className="absolute top-6 left-0 right-0 px-10 z-20">
                 {overlay.headline && (
                   <h2 
-                    className={`text-3xl font-black leading-tight mb-3 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
+                    className={`text-3xl font-black leading-tight mb-2 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
                     style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text }}
                   >
                     {overlay.headline}
@@ -208,7 +208,7 @@ export default function SlideCard({
                 )}
                 {overlay.subhead && (
                   <p 
-                    className={`text-base leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
+                    className={`text-sm leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
                     style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text, opacity: 0.8 }}
                   >
                     {overlay.subhead}
@@ -217,11 +217,11 @@ export default function SlideCard({
               </div>
             )}
             
-            {/* Phone frame with screenshot */}
+            {/* Phone frame with screenshot - larger, tighter positioning */}
             {imageUrl && (
-              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '160px' : '0' }}>
-                {/* Realistic iPhone bezel */}
-                <div className="relative w-[58%] aspect-[9/19.5] bg-black rounded-[2.5rem] shadow-2xl p-1">
+              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}>
+                {/* Realistic iPhone bezel - scaled to 74% width */}
+                <div className="relative w-[74%] aspect-[9/19.5] bg-black rounded-[2.5rem] shadow-2xl p-1">
                   {/* Inner screen area with smaller radius */}
                   <div className="relative w-full h-full bg-black rounded-[2.2rem] overflow-hidden">
                     <img
@@ -239,9 +239,9 @@ export default function SlideCard({
             {!imageUrl && (
               <div 
                 className="absolute inset-0 flex items-center justify-center text-gray-400"
-                style={{ paddingTop: hasOverlay ? '160px' : '0' }}
+                style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}
               >
-                <div className="w-[58%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center">
+                <div className="w-[74%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center">
                   <span className="text-sm">No screenshot</span>
                 </div>
               </div>
