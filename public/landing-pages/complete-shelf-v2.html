@@ -2273,15 +2273,17 @@
         "framed": "/landing/covers/framed.jpg"
       };
 
-      // Load the PNG texture using THREE.TextureLoader
+      // Load the JPEG texture using THREE.TextureLoader
       const textureLoader = new THREE.TextureLoader();
       const texture = textureLoader.load(coverPaths[book.id]);
       
-      // Configure the texture
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      // Configure the texture for NPOT (non-power-of-two) images
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
-      texture.generateMipmaps = true;
+      texture.generateMipmaps = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
       texture.needsUpdate = true;
       
       return texture;
