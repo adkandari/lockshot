@@ -94,6 +94,10 @@ export async function registerWebMCPTools(
           return !overlay || (!overlay.headline && !overlay.subhead);
         });
         
+        const campaignSlide = currentSlides.find(s => s.kind === "campaign");
+        const hasCampaign = !!campaignSlide;
+        const campaignEmpty = hasCampaign && !campaignSlide.imageKey && !campaignSlide.backgroundImage;
+        
         return {
           project: project ? {
             id: project.id,
@@ -104,7 +108,12 @@ export async function registerWebMCPTools(
           availableLocales: locales,
           overlays_empty: hasEmptyOverlays,
           hint: hasEmptyOverlays ? "Overlays are empty — write headline and subhead per slide with set_overlay" : undefined,
-          slides: currentSlides.map(slide => ({
+          campaign_slide: hasCampaign ? {
+            exists: true,
+            has_image: !campaignEmpty,
+            hint: campaignEmpty ? "Campaign slide exists but needs a lifestyle photo — generate one via DALL-E or similar" : undefined,
+          } : undefined,
+          slides: currentSlides.filter(s => s.kind !== "campaign").map(slide => ({
             id: slide.id,
             headline: slide.overlays[locale]?.headline || '',
             subhead: slide.overlays[locale]?.subhead || '',

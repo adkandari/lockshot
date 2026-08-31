@@ -20,7 +20,7 @@ export default function SlideCard({
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [kovaColors, setKovaColors] = useState<{ light: string; dark: string; text: string } | null>(null);
+  const [extractedColors, setExtractedColors] = useState<{ light: string; dark: string; text: string } | null>(null);
   
   const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
   const isOverflowing = slide.overflow[currentLocale] || false;
@@ -32,13 +32,13 @@ export default function SlideCard({
       createImageURL(slide.imageKey).then(url => {
         if (url) {
           setImageUrl(url);
-          // Extract color for Kova template
-          if (slide.templateId === 'full_bleed_caption_bottom') {
+          // Extract color for Perfect and Growth templates
+          if (slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top') {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = async () => {
               const colors = await extractDominantColor(img);
-              setKovaColors(colors);
+              setExtractedColors(colors);
             };
             img.src = url;
           }
@@ -46,12 +46,12 @@ export default function SlideCard({
       });
     } else if (slide.backgroundImage) {
       setImageUrl(slide.backgroundImage);
-      if (slide.templateId === 'full_bleed_caption_bottom') {
+      if (slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top') {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = async () => {
           const colors = await extractDominantColor(img);
-          setKovaColors(colors);
+          setExtractedColors(colors);
         };
         img.src = slide.backgroundImage;
       }
@@ -76,35 +76,174 @@ export default function SlideCard({
   };
 
   const renderTemplate = () => {
+    // Special case: Campaign slide for Growth template
+    if (slide.kind === "campaign") {
+      const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      const accentColor = colors.dark;
+      const textColor = colors.text;
+      
+      return (
+        <>
+          {/* Cream canvas */}
+          <div 
+            className="absolute inset-0" 
+            style={{ backgroundColor: colors.light }}
+          />
+          
+          {/* Organic blobs */}
+          <div 
+            className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-35 blur-3xl"
+            style={{ backgroundColor: accentColor, transform: 'translate(25%, -25%)' }}
+          />
+          <div 
+            className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-30 blur-3xl"
+            style={{ backgroundColor: accentColor, transform: 'translate(-25%, 25%)' }}
+          />
+          
+          {/* Stacked headline with last word in accent */}
+          {hasOverlay && (
+            <div className="absolute top-10 left-0 right-0 px-8 z-20">
+              {overlay.headline && (() => {
+                const words = overlay.headline.split(/\s+/);
+                const lastWord = words[words.length - 1];
+                const otherWords = words.slice(0, -1).join(' ');
+                
+                return (
+                  <div className="mb-3">
+                    {otherWords && (
+                      <h2 
+                        className="text-3xl font-black leading-tight lowercase" 
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: textColor }}
+                      >
+                        {otherWords}
+                      </h2>
+                    )}
+                    <h2 
+                      className="text-3xl font-black leading-tight lowercase relative inline-block" 
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: accentColor }}
+                    >
+                      {lastWord}
+                      {/* Simple squiggle underline */}
+                      <svg 
+                        className="absolute left-0 -bottom-1 w-full h-2" 
+                        viewBox="0 0 100 8" 
+                        preserveAspectRatio="none"
+                        style={{ opacity: 0.7 }}
+                      >
+                        <path 
+                          d="M 0 4 Q 25 0, 50 4 T 100 4" 
+                          fill="none" 
+                          stroke={accentColor} 
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </h2>
+                  </div>
+                );
+              })()}
+              {overlay.subhead && (
+                <p 
+                  className="text-sm leading-relaxed mt-2" 
+                  style={{ fontFamily: 'var(--font-source-serif)', color: textColor, opacity: 0.75 }}
+                >
+                  {overlay.subhead}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Lifestyle photo in rounded rect on right/bottom */}
+          {imageUrl ? (
+            <div className="absolute bottom-8 right-8 w-1/2 h-2/3 rounded-3xl overflow-hidden shadow-xl">
+              <img
+                src={imageUrl}
+                alt="Campaign lifestyle"
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+              />
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-gray-400">
+                <p className="text-sm">Drop lifestyle photo</p>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+    
     switch (slide.templateId) {
-      case "caption_top": // Pluto: Clean SaaS blue/white
+      case "caption_top": // Growth: Cream campaign energy with top type
+        const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+        
+        // Derive cream tint from extracted color
+        const creamBg = growthColors.light;
+        const accentColor = growthColors.dark;
+        const textColor = growthColors.text;
+        
         return (
           <>
+            {/* Warm cream canvas */}
+            <div 
+              className="absolute inset-0" 
+              style={{ backgroundColor: creamBg }}
+            />
+            
+            {/* Soft organic blobs in corners */}
+            <div 
+              className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 blur-3xl"
+              style={{ backgroundColor: accentColor, transform: 'translate(-30%, -30%)' }}
+            />
+            <div 
+              className="absolute bottom-0 right-0 w-56 h-56 rounded-full opacity-30 blur-3xl"
+              style={{ backgroundColor: accentColor, transform: 'translate(30%, 30%)' }}
+            />
+            
+            {/* Type at the TOP */}
             {hasOverlay && (
-              <div className="absolute top-0 left-0 right-0 z-10">
-                <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-cyan-500 px-10 py-12">
-                  {overlay.headline && (
-                    <h2 className={`text-3xl font-extrabold text-white leading-tight mb-3 tracking-tight ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.headline}
-                    </h2>
-                  )}
-                  {overlay.subhead && (
-                    <p className={`text-base text-white/95 leading-relaxed ${isOverflowing ? 'text-red-100' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.subhead}
-                    </p>
-                  )}
-                </div>
+              <div className="absolute top-8 left-0 right-0 px-8 z-20">
+                {overlay.headline && (
+                  <h2 
+                    className={`text-2xl font-black leading-tight mb-2 tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: textColor }}
+                  >
+                    {overlay.headline}
+                  </h2>
+                )}
+                {overlay.subhead && (
+                  <p 
+                    className={`text-sm leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ fontFamily: 'var(--font-source-serif)', color: textColor, opacity: 0.85 }}
+                  >
+                    {overlay.subhead}
+                  </p>
+                )}
               </div>
             )}
+            
+            {/* Thin-bezel phone frame centered in lower portion */}
             {imageUrl && (
-              <div className={`absolute inset-0 ${hasOverlay ? 'top-40' : 'top-0'} bg-white`}>
-                <div className={hasOverlay ? 'h-full px-6 py-4' : 'h-full'}>
+              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '130px' : '0' }}>
+                <div className="relative w-[70%] aspect-[9/19.5] bg-gray-900 rounded-[2rem] shadow-xl overflow-hidden" style={{ border: '2px solid #1a1a1a' }}>
                   <img
                     src={imageUrl}
                     alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    className="w-full h-full object-contain bg-black"
                     crossOrigin="anonymous"
                   />
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback if no image */}
+            {!imageUrl && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center text-gray-400"
+                style={{ paddingTop: hasOverlay ? '130px' : '0' }}
+              >
+                <div className="w-[70%] aspect-[9/19.5] bg-gray-200 rounded-[2rem] flex items-center justify-center" style={{ border: '2px solid #ccc' }}>
+                  <span className="text-xs">No screenshot</span>
                 </div>
               </div>
             )}
@@ -166,9 +305,9 @@ export default function SlideCard({
           </>
         );
 
-      case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
+      case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
       default:
-        const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+        const colors = extractedColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
         return (
           <>
             {/* Two-tone organic background */}

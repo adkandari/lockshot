@@ -10,7 +10,15 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
   const zip = new JSZip();
   const safeProjectName = projectName.toLowerCase().replace(/\s+/g, '-');
 
-  for (const slide of slides) {
+  // Filter out empty campaign slides
+  const slidesToExport = slides.filter(slide => {
+    if (slide.kind === "campaign" && !slide.imageKey && !slide.backgroundImage) {
+      return false;
+    }
+    return true;
+  });
+
+  for (const slide of slidesToExport) {
     const canvas = document.createElement("canvas");
     canvas.width = EXPORT_WIDTH;
     canvas.height = EXPORT_HEIGHT;
@@ -36,13 +44,13 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    // Extract colors for Kova if needed
-    let kovaColors = null;
-    if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
-      kovaColors = await extractDominantColor(screenshotImg);
+    // Extract colors for Perfect and Growth if needed
+    let extractedColors = null;
+    if ((slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top' || slide.kind === 'campaign') && screenshotImg) {
+      extractedColors = await extractDominantColor(screenshotImg);
     }
 
-    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, kovaColors);
+    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -75,71 +83,214 @@ async function renderTemplate(
   img: HTMLImageElement | null,
   overlay: { headline: string; subhead: string } | undefined,
   hasOverlay: boolean,
-  kovaColors?: { light: string; dark: string; text: string } | null
+  extractedColors?: { light: string; dark: string; text: string } | null,
+  slideKind?: "campaign" | "product"
 ) {
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
 
+  // Special case: Campaign slide for Growth template
+  if (slideKind === "campaign") {
+    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+    
+    // 1. Fill with cream background
+    ctx.fillStyle = colors.light;
+    ctx.fillRect(0, 0, width, height);
+    
+    // 2. Draw organic blobs
+    ctx.globalAlpha = 0.35;
+    const blobTopRight = ctx.createRadialGradient(width * 0.85, height * 0.15, 0, width * 0.85, height * 0.15, width * 0.3);
+    blobTopRight.addColorStop(0, colors.dark);
+    blobTopRight.addColorStop(1, 'transparent');
+    ctx.fillStyle = blobTopRight;
+    ctx.beginPath();
+    ctx.arc(width * 0.85, height * 0.15, width * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.globalAlpha = 0.3;
+    const blobBottomLeft = ctx.createRadialGradient(width * 0.15, height * 0.85, 0, width * 0.15, height * 0.85, width * 0.27);
+    blobBottomLeft.addColorStop(0, colors.dark);
+    blobBottomLeft.addColorStop(1, 'transparent');
+    ctx.fillStyle = blobBottomLeft;
+    ctx.beginPath();
+    ctx.arc(width * 0.15, height * 0.85, width * 0.27, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.globalAlpha = 1.0;
+    
+    // 3. Draw stacked headline with last word in accent
+    if (hasOverlay && overlay && overlay.headline) {
+      const words = overlay.headline.split(/\s+/);
+      const lastWord = words[words.length - 1];
+      const otherWords = words.slice(0, -1).join(' ');
+      
+      const textX = 100;
+      let textY = 120;
+      
+      ctx.font = `900 130px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      
+      if (otherWords) {
+        ctx.fillStyle = colors.text;
+        wrapText(ctx, otherWords.toLowerCase(), textX, textY, width - 200, 150);
+        textY += 150;
+      }
+      
+      // Last word in accent with squiggle
+      ctx.fillStyle = colors.dark;
+      ctx.fillText(lastWord.toLowerCase(), textX, textY);
+      
+      // Draw squiggle underline
+      const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
+      ctx.strokeStyle = colors.dark;
+      ctx.lineWidth = 8;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(textX, textY + 145);
+      ctx.bezierCurveTo(
+        textX + textWidth * 0.25, textY + 135,
+        textX + textWidth * 0.5, textY + 155,
+        textX + textWidth * 0.75, textY + 145
+      );
+      ctx.bezierCurveTo(
+        textX + textWidth * 0.875, textY + 140,
+        textX + textWidth, textY + 145,
+        textX + textWidth, textY + 145
+      );
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      
+      textY += 180;
+      
+      // Subhead
+      if (overlay.subhead) {
+        ctx.font = `56px Georgia, "Source Serif 4", serif`;
+        ctx.fillStyle = colors.text;
+        ctx.globalAlpha = 0.75;
+        wrapText(ctx, overlay.subhead, textX, textY, width - 200, 70);
+        ctx.globalAlpha = 1.0;
+      }
+    }
+    
+    // 4. Draw lifestyle photo in rounded rect on right/bottom
+    if (img) {
+      const photoWidth = width * 0.5;
+      const photoHeight = height * 0.67;
+      const photoX = width - photoWidth - 80;
+      const photoY = height - photoHeight - 100;
+      const photoRadius = 96;
+      
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+      ctx.shadowBlur = 60;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 30;
+      
+      ctx.beginPath();
+      roundRect(ctx, photoX, photoY, photoWidth, photoHeight, photoRadius);
+      ctx.clip();
+      ctx.drawImage(img, photoX, photoY, photoWidth, photoHeight);
+      ctx.restore();
+    }
+    
+    return;
+  }
+
   switch (templateId) {
-    case "caption_top": // Pluto: Clean SaaS blue/white
+    case "caption_top": // Growth: Cream campaign energy with top type
+      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      
+      // 1. Fill with warm cream background
+      ctx.fillStyle = growthColors.light;
+      ctx.fillRect(0, 0, width, height);
+      
+      // 2. Draw soft organic blobs in corners
+      ctx.fillStyle = growthColors.dark;
+      ctx.globalAlpha = 0.4;
+      
+      // Top-left blob
+      const blob1X = width * 0.15;
+      const blob1Y = height * 0.1;
+      const blob1R = width * 0.25;
+      const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
+      gradient1.addColorStop(0, growthColors.dark);
+      gradient1.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient1;
+      ctx.beginPath();
+      ctx.arc(blob1X, blob1Y, blob1R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Bottom-right blob
+      ctx.globalAlpha = 0.3;
+      const blob2X = width * 0.85;
+      const blob2Y = height * 0.9;
+      const blob2R = width * 0.22;
+      const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
+      gradient2.addColorStop(0, growthColors.dark);
+      gradient2.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient2;
+      ctx.beginPath();
+      ctx.arc(blob2X, blob2Y, blob2R, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.globalAlpha = 1.0;
+      
+      // 3. Draw type at the TOP
       if (hasOverlay && overlay) {
-        const captionHeight = 380;
+        const textPadding = 80;
+        let textY = 100;
         
-        // Bright blue gradient for clean SaaS look
-        const gradient = ctx.createLinearGradient(0, 0, width, captionHeight);
-        gradient.addColorStop(0, "#0ea5e9"); // sky-500
-        gradient.addColorStop(0.5, "#3b82f6"); // blue-500
-        gradient.addColorStop(1, "#06b6d4"); // cyan-500
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, captionHeight);
-
-        const padding = 100;
-        let currentY = padding + 20;
-
         if (overlay.headline) {
-          ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#ffffff";
+          ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.fillStyle = growthColors.text;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, padding, currentY, width - padding * 2, 140);
-          currentY += 160;
+          wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);
+          textY += 150;
         }
-
+        
         if (overlay.subhead) {
-          ctx.font = `64px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+          // Try to load serif font for subhead
+          ctx.font = `58px Georgia, "Source Serif 4", serif`;
+          ctx.fillStyle = growthColors.text;
+          ctx.globalAlpha = 0.85;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, padding, currentY, width - padding * 2, 80);
+          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 72);
+          ctx.globalAlpha = 1.0;
         }
       }
-
+      
+      // 4. Draw thin-bezel phone frame centered in lower portion
       if (img) {
-        const imgY = hasOverlay ? 420 : 0;
-        const imgHeight = hasOverlay ? height - 480 : height;
-        const imgX = hasOverlay ? 60 : 0;
-        const imgWidth = hasOverlay ? width - 120 : width;
+        const frameWidth = width * 0.70;
+        const frameHeight = frameWidth * (19.5 / 9);
+        const frameX = (width - frameWidth) / 2;
+        const frameY = hasOverlay ? 500 : (height - frameHeight) / 2;
+        const frameRadius = 64;
+        const bezelWidth = 8;
         
-        if (hasOverlay) {
-          // White background behind rounded image
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, imgY - 40, width, height - imgY + 40);
-          
-          // Draw rounded image with shadow
-          ctx.save();
-          const radius = 48;
-          ctx.beginPath();
-          roundRect(ctx, imgX, imgY, imgWidth, imgHeight, radius);
-          ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
-          ctx.shadowBlur = 60;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 20;
-          ctx.clip();
-          ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-          ctx.restore();
-        } else {
-          ctx.drawImage(img, 0, 0, width, height);
-        }
+        // Outer bezel
+        ctx.save();
+        ctx.fillStyle = "#1a1a1a";
+        ctx.beginPath();
+        roundRect(ctx, frameX - bezelWidth, frameY - bezelWidth, frameWidth + bezelWidth * 2, frameHeight + bezelWidth * 2, frameRadius);
+        ctx.fill();
+        
+        // Inner screen with shadow
+        ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 20;
+        
+        ctx.beginPath();
+        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth / 2);
+        ctx.clip();
+        ctx.fillStyle = "#000000";
+        ctx.fill();
+        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        ctx.restore();
       }
       break;
 
@@ -230,9 +381,9 @@ async function renderTemplate(
       }
       break;
 
-    case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
+    case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
     default:
-      const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+      const colors = extractedColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
       
       // 1. Fill with light background
       ctx.fillStyle = colors.light;
@@ -242,29 +393,29 @@ async function renderTemplate(
       ctx.fillStyle = colors.dark;
       ctx.globalAlpha = 0.6;
       
-      // Top-right blob
-      const blob1X = width * 0.85;
-      const blob1Y = height * 0.1;
-      const blob1R = width * 0.35;
-      const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
-      gradient1.addColorStop(0, colors.dark);
-      gradient1.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient1;
+      // Top-right blob (Perfect template)
+      const perfectBlob1X = width * 0.85;
+      const perfectBlob1Y = height * 0.1;
+      const perfectBlob1R = width * 0.35;
+      const perfectGradient1 = ctx.createRadialGradient(perfectBlob1X, perfectBlob1Y, 0, perfectBlob1X, perfectBlob1Y, perfectBlob1R);
+      perfectGradient1.addColorStop(0, colors.dark);
+      perfectGradient1.addColorStop(1, 'transparent');
+      ctx.fillStyle = perfectGradient1;
       ctx.beginPath();
-      ctx.arc(blob1X, blob1Y, blob1R, 0, Math.PI * 2);
+      ctx.arc(perfectBlob1X, perfectBlob1Y, perfectBlob1R, 0, Math.PI * 2);
       ctx.fill();
       
-      // Bottom-left blob
+      // Bottom-left blob (Perfect template)
       ctx.globalAlpha = 0.5;
-      const blob2X = width * 0.15;
-      const blob2Y = height * 0.9;
-      const blob2R = width * 0.3;
-      const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
-      gradient2.addColorStop(0, colors.dark);
-      gradient2.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient2;
+      const perfectBlob2X = width * 0.15;
+      const perfectBlob2Y = height * 0.9;
+      const perfectBlob2R = width * 0.3;
+      const perfectGradient2 = ctx.createRadialGradient(perfectBlob2X, perfectBlob2Y, 0, perfectBlob2X, perfectBlob2Y, perfectBlob2R);
+      perfectGradient2.addColorStop(0, colors.dark);
+      perfectGradient2.addColorStop(1, 'transparent');
+      ctx.fillStyle = perfectGradient2;
       ctx.beginPath();
-      ctx.arc(blob2X, blob2Y, blob2R, 0, Math.PI * 2);
+      ctx.arc(perfectBlob2X, perfectBlob2Y, perfectBlob2R, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.globalAlpha = 1.0;

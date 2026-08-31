@@ -10,7 +10,7 @@ export function measureOverflow(overlay: SlideOverlay): boolean {
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
 
-  // Updated for Kova top caption (Pluto/Astra use different areas)
+  // Measurements for Perfect and Growth top caption areas
   const boxWidth = EXPORT_WIDTH - 200; // 100px padding on each side
   const boxHeight = 320; // Top caption area
   const maxWidth = boxWidth * 0.95;
