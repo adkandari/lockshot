@@ -20,6 +20,11 @@ export interface SlideData {
   locked: boolean;
   comments: string[];
   overflow: Record<Locale, boolean>;
+  colors?: {
+    text?: string;
+    background?: string;
+    accent?: string;
+  };
 }
 
 export interface Project {

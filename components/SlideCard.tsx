@@ -10,6 +10,7 @@ interface SlideCardProps {
   currentLocale: Locale;
   onToggleLock: (slideId: number) => void;
   onFileUpload: (file: File) => void;
+  onColorChange?: (slideId: number, colors: { text?: string; background?: string; accent?: string }) => void;
 }
 
 export default function SlideCard({
@@ -17,6 +18,7 @@ export default function SlideCard({
   currentLocale,
   onToggleLock,
   onFileUpload,
+  onColorChange,
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -168,23 +170,29 @@ export default function SlideCard({
 
       case "full_bleed_caption_bottom": // Kova: Organic background + centered phone
       default:
-        const colors = kovaColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
+        // Normalize colors from either slide overrides or auto-sampled
+        const normalizedColors = {
+          text: slide.colors?.text || kovaColors?.text || 'rgb(109, 40, 217)',
+          background: slide.colors?.background || kovaColors?.light || 'rgb(243, 232, 255)',
+          accent: slide.colors?.accent || kovaColors?.dark || 'rgb(196, 181, 253)',
+        };
+        
         return (
           <>
             {/* Two-tone organic background */}
             <div 
               className="absolute inset-0" 
-              style={{ background: `linear-gradient(135deg, ${colors.light} 0%, ${colors.light} 100%)` }}
+              style={{ background: `linear-gradient(135deg, ${normalizedColors.background} 0%, ${normalizedColors.background} 100%)` }}
             />
             
             {/* Organic blob shapes */}
             <div 
               className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-60 blur-3xl"
-              style={{ backgroundColor: colors.dark, transform: 'translate(30%, -30%)' }}
+              style={{ backgroundColor: normalizedColors.accent, transform: 'translate(30%, -30%)' }}
             />
             <div 
               className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-50 blur-3xl"
-              style={{ backgroundColor: colors.dark, transform: 'translate(-25%, 25%)' }}
+              style={{ backgroundColor: normalizedColors.accent, transform: 'translate(-25%, 25%)' }}
             />
             
             {/* Headline at top */}
@@ -193,7 +201,7 @@ export default function SlideCard({
                 {overlay.headline && (
                   <h2 
                     className={`text-3xl font-black leading-tight mb-3 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text }}
                   >
                     {overlay.headline}
                   </h2>
@@ -201,7 +209,7 @@ export default function SlideCard({
                 {overlay.subhead && (
                   <p 
                     className={`text-base leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: colors.text, opacity: 0.8 }}
+                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text, opacity: 0.8 }}
                   >
                     {overlay.subhead}
                   </p>
@@ -212,13 +220,17 @@ export default function SlideCard({
             {/* Phone frame with screenshot */}
             {imageUrl && (
               <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '160px' : '0' }}>
-                <div className="relative w-[58%] aspect-[9/19.5] bg-black rounded-[3rem] shadow-2xl overflow-hidden">
-                  <img
-                    src={imageUrl}
-                    alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                  />
+                {/* Realistic iPhone bezel */}
+                <div className="relative w-[58%] aspect-[9/19.5] bg-black rounded-[2.5rem] shadow-2xl p-1">
+                  {/* Inner screen area with smaller radius */}
+                  <div className="relative w-full h-full bg-black rounded-[2.2rem] overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt={`Slide ${slide.id}`}
+                      className="w-full h-full object-contain"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -229,7 +241,7 @@ export default function SlideCard({
                 className="absolute inset-0 flex items-center justify-center text-gray-400"
                 style={{ paddingTop: hasOverlay ? '160px' : '0' }}
               >
-                <div className="w-[58%] aspect-[9/19.5] bg-gray-200 rounded-[3rem] flex items-center justify-center">
+                <div className="w-[58%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center">
                   <span className="text-sm">No screenshot</span>
                 </div>
               </div>
@@ -289,6 +301,59 @@ export default function SlideCard({
             {isLocked ? "🔒 Locked" : "🔓 Unlocked"}
           </button>
         </div>
+
+        {/* Color pickers for Kova template */}
+        {slide.templateId === 'full_bleed_caption_bottom' && (
+          <div className="mb-3 pb-3 border-b border-gray-200">
+            <p className="text-xs font-medium text-gray-600 mb-2">Colors:</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Text:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.text || (kovaColors?.text || '#6d28d9')}
+                  onChange={(e) => {
+                    onColorChange?.(slide.id, { ...slide.colors, text: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Bg:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.background || (kovaColors?.light || '#f3e8ff')}
+                  onChange={(e) => {
+                    onColorChange?.(slide.id, { ...slide.colors, background: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-600">Accent:</span>
+                <input
+                  type="color"
+                  value={slide.colors?.accent || (kovaColors?.dark || '#c4b5fd')}
+                  onChange={(e) => {
+                    onColorChange?.(slide.id, { ...slide.colors, accent: e.target.value });
+                  }}
+                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                />
+              </label>
+              {slide.colors && (
+                <button
+                  onClick={() => {
+                    onColorChange?.(slide.id, {});
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  title="Reset to auto-sampled colors"
+                >
+                  Auto
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {slide.comments.length > 0 && (
           <div className="mt-3 space-y-2">
