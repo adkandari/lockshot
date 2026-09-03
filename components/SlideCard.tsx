@@ -11,6 +11,7 @@ interface SlideCardProps {
   onToggleLock: (slideId: number) => void;
   onFileUpload: (file: File) => void;
   onColorChange?: (slideId: number, colors: { text?: string; background?: string; accent?: string }) => void;
+  onOverlayChange?: (slideId: number, headline: string, subhead: string) => void;
 }
 
 export default function SlideCard({
@@ -19,12 +20,15 @@ export default function SlideCard({
   onToggleLock,
   onFileUpload,
   onColorChange,
+  onOverlayChange,
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<{ light: string; dark: string; text: string } | null>(null);
+  const [editingField, setEditingField] = useState<'headline' | 'subhead' | null>(null);
+  const [editValue, setEditValue] = useState('');
   
-  const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
+  const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '', author: undefined };
   const isOverflowing = slide.overflow[currentLocale] || false;
   const isLocked = slide.locked;
   const hasOverlay = overlay.headline || overlay.subhead;
@@ -434,19 +438,113 @@ export default function SlideCard({
 
         <div className="space-y-2 text-sm">
           <div>
-            <div className="text-[11px] text-ink-3 mb-1">Headline</div>
-            {overlay.headline ? (
-              <div className="text-ink-2 leading-snug">{overlay.headline}</div>
+            <div className="text-[11px] text-ink-3 mb-1">
+              Headline
+              {overlay.author && (
+                <span className="ml-1.5 text-[10px] text-ink-3">
+                  · {overlay.author === 'model' ? 'ChatGPT' : 'Edited'}
+                </span>
+              )}
+            </div>
+            {editingField === 'headline' ? (
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  if (onOverlayChange && editValue !== overlay.headline) {
+                    onOverlayChange(slide.id, editValue, overlay.subhead);
+                  }
+                  setEditingField(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (onOverlayChange && editValue !== overlay.headline) {
+                      onOverlayChange(slide.id, editValue, overlay.subhead);
+                    }
+                    setEditingField(null);
+                  } else if (e.key === 'Escape') {
+                    setEditingField(null);
+                  }
+                }}
+                autoFocus
+                className="w-full px-2 py-1 text-ink bg-surface border border-model rounded-[9px] focus:outline-none focus:ring-1 focus:ring-model"
+              />
+            ) : overlay.headline ? (
+              <div
+                onClick={() => {
+                  setEditingField('headline');
+                  setEditValue(overlay.headline);
+                }}
+                className="text-ink-2 leading-snug cursor-text hover:text-ink transition-colors"
+              >
+                {overlay.headline}
+              </div>
             ) : (
-              <div className="text-model leading-snug">Ask the model</div>
+              <div
+                onClick={() => {
+                  setEditingField('headline');
+                  setEditValue('');
+                }}
+                className="text-model leading-snug cursor-text hover:underline"
+              >
+                Ask the model
+              </div>
             )}
           </div>
           <div>
-            <div className="text-[11px] text-ink-3 mb-1">Subhead</div>
-            {overlay.subhead ? (
-              <div className="text-ink-2 leading-snug">{overlay.subhead}</div>
+            <div className="text-[11px] text-ink-3 mb-1">
+              Subhead
+              {overlay.author && (
+                <span className="ml-1.5 text-[10px] text-ink-3">
+                  · {overlay.author === 'model' ? 'ChatGPT' : 'Edited'}
+                </span>
+              )}
+            </div>
+            {editingField === 'subhead' ? (
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  if (onOverlayChange && editValue !== overlay.subhead) {
+                    onOverlayChange(slide.id, overlay.headline, editValue);
+                  }
+                  setEditingField(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (onOverlayChange && editValue !== overlay.subhead) {
+                      onOverlayChange(slide.id, overlay.headline, editValue);
+                    }
+                    setEditingField(null);
+                  } else if (e.key === 'Escape') {
+                    setEditingField(null);
+                  }
+                }}
+                autoFocus
+                className="w-full px-2 py-1 text-ink bg-surface border border-model rounded-[9px] focus:outline-none focus:ring-1 focus:ring-model"
+              />
+            ) : overlay.subhead ? (
+              <div
+                onClick={() => {
+                  setEditingField('subhead');
+                  setEditValue(overlay.subhead);
+                }}
+                className="text-ink-2 leading-snug cursor-text hover:text-ink transition-colors"
+              >
+                {overlay.subhead}
+              </div>
             ) : (
-              <div className="text-model leading-snug">Ask the model</div>
+              <div
+                onClick={() => {
+                  setEditingField('subhead');
+                  setEditValue('');
+                }}
+                className="text-model leading-snug cursor-text hover:underline"
+              >
+                Ask the model
+              </div>
             )}
           </div>
         </div>

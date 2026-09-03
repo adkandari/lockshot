@@ -337,6 +337,32 @@ export default function LockhotDesk() {
     });
   };
 
+  const handleOverlayChange = (slideId: number, headline: string, subhead: string) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return {
+            ...s,
+            overlays: {
+              ...s.overlays,
+              [currentLocale]: {
+                headline,
+                subhead,
+                author: 'user' as const,
+              },
+            },
+          };
+        }
+        return s;
+      });
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
   const handleStartOver = () => {
     setCurrentProject(null);
     setSlides([]);
@@ -786,6 +812,7 @@ export default function LockhotDesk() {
                 onToggleLock={toggleLock}
                 onFileUpload={(file) => handleFileUpload(slide.id, file)}
                 onColorChange={handleColorChange}
+                onOverlayChange={handleOverlayChange}
               />
             </div>
           ))}
@@ -837,10 +864,49 @@ export default function LockhotDesk() {
                   onToggleLock={toggleLock}
                   onFileUpload={handleCampaignUpload}
                   onColorChange={handleColorChange}
+                  onOverlayChange={handleOverlayChange}
                 />
               </div>
             );
           })()}
+        </div>
+      </div>
+
+      {/* Copy Desk Table */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-ink mb-4">Copy Desk</h3>
+        <div className="bg-surface border border-line rounded-[22px] overflow-hidden shadow-card">
+          <table className="w-full text-sm">
+            <thead className="bg-tray border-b border-line">
+              <tr>
+                <th className="text-left px-4 py-3 text-ink-2 font-medium">#</th>
+                <th className="text-left px-4 py-3 text-ink-2 font-medium">Headline</th>
+                <th className="text-left px-4 py-3 text-ink-2 font-medium">Subhead</th>
+                <th className="text-left px-4 py-3 text-ink-2 font-medium">Written by</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...slides.filter(s => s.kind === "campaign"), ...slides.filter(s => s.kind !== "campaign")].map((slide, idx) => {
+                const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '', author: undefined };
+                return (
+                  <tr key={slide.id} className={idx > 0 ? 'border-t border-line-soft' : ''}>
+                    <td className="px-4 py-3 text-ink-3 font-jetbrains">
+                      {slide.kind === "campaign" ? "0" : slide.id}
+                    </td>
+                    <td className="px-4 py-3 text-ink-2">
+                      {overlay.headline || <span className="text-ink-3 italic">Empty</span>}
+                    </td>
+                    <td className="px-4 py-3 text-ink-2">
+                      {overlay.subhead || <span className="text-ink-3 italic">Empty</span>}
+                    </td>
+                    <td className="px-4 py-3 text-ink-3 text-xs">
+                      {overlay.author === 'model' ? 'ChatGPT' : overlay.author === 'user' ? 'Edited' : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
