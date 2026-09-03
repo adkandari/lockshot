@@ -266,7 +266,7 @@ async function renderTemplate(
         
         if (overlay.headline) {
           ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = growthColors.text;
+          ctx.fillStyle = growthColors.dark;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);

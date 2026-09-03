@@ -214,7 +214,7 @@ export default function SlideCard({
                       className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
                       style={{ 
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
-                        color: growthNormalizedColors.text,
+                        color: growthNormalizedColors.accent,
                         fontSize: '8cqw',
                         marginBottom: '0.7cqh'
                       }}
