@@ -5,32 +5,80 @@ const EXPORT_HEIGHT = 2868;
 
 export function measureOverflow(overlay: SlideOverlay, templateId?: string): boolean {
   if (typeof document === 'undefined') return false;
+  
+  // Empty overlay never overflows
+  if (!overlay || (!overlay.headline && !overlay.subhead)) {
+    return false;
+  }
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
 
-  // Measurements for Perfect and Growth top caption areas
-  const boxWidth = EXPORT_WIDTH - 200; // 100px padding on each side
-  const boxHeight = 320; // Top caption area
-  const maxWidth = boxWidth * 0.95;
-
-  const headlineFontSize = 120;
-  ctx.font = `900 ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-  const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, headlineFontSize * 1.15);
-
-  // Bold template (framed_on_gradient) has no subhead
-  let subheadHeight = 0;
-  if (templateId !== 'framed_on_gradient') {
-    const subheadFontSize = 64;
-    ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-    subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
+  // Match the exact rendering parameters from export.ts for each template
+  if (templateId === 'caption_top') {
+    // Growth template: Roboto Condensed 110px uppercase + Courier Prime 58px
+    const textPadding = 80;
+    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1160px
+    const availableHeight = 400; // From y=100 to phone y=500
+    
+    let totalUsed = 0;
+    
+    if (overlay.headline) {
+      ctx.font = `700 110px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
+      const headlineHeight = measureTextHeight(ctx, overlay.headline.toUpperCase(), maxWidth, 130);
+      totalUsed += headlineHeight;
+      
+      // Gap after headline before subhead (matches export.ts line 290)
+      if (overlay.subhead) {
+        totalUsed += 150;
+      }
+    }
+    
+    if (overlay.subhead) {
+      ctx.font = `700 58px Courier Prime, "Courier New", monospace`;
+      const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, 72);
+      totalUsed += subheadHeight;
+    }
+    
+    return totalUsed > availableHeight;
+    
+  } else if (templateId === 'framed_on_gradient') {
+    // Bold template: System font 140px, headline only
+    const maxWidth = EXPORT_WIDTH * 0.85; // 1122px
+    const lineHeight = 160;
+    
+    if (!overlay.headline) return false;
+    
+    ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+    const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, lineHeight);
+    
+    // Bold has generous space; use conservative estimate
+    const availableHeight = 800;
+    return headlineHeight > availableHeight;
+    
+  } else {
+    // Perfect template (full_bleed_caption_bottom) and default: System font 120px + 56px
+    const textPadding = 100;
+    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1120px
+    const availableHeight = 290; // From y=60 to phone y=350
+    
+    let totalUsed = 0;
+    
+    if (overlay.headline) {
+      ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, 140);
+      totalUsed += headlineHeight;
+    }
+    
+    if (overlay.subhead) {
+      ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, 70);
+      totalUsed += subheadHeight;
+    }
+    
+    return totalUsed > availableHeight;
   }
-
-  const totalHeight = headlineHeight + subheadHeight + (subheadHeight > 0 ? 60 : 0); // padding only if subhead exists
-  const availableHeight = boxHeight;
-
-  return totalHeight > availableHeight;
 }
 
 function measureTextHeight(
