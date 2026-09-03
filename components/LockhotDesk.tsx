@@ -33,7 +33,7 @@ const COMMON_LOCALES = [
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
   { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
   { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
-  { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
+  { id: "framed_on_gradient", name: "Bold", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -697,6 +697,7 @@ export default function LockhotDesk() {
                       : 'border-line text-ink-2 hover:bg-line-soft'
                   }`}
                 >
+                  <span>{localeInfo?.flag || '🌐'}</span>
                   <span>{locale}</span>
                   {locales.length > 1 && (
                     <span 
@@ -727,7 +728,7 @@ export default function LockhotDesk() {
                   <option value="">Select locale...</option>
                   {COMMON_LOCALES.filter(l => !locales.includes(l.code)).map(locale => (
                     <option key={locale.code} value={locale.code}>
-                      {locale.code} — {locale.name}
+                      {locale.flag} {locale.code} — {locale.name}
                     </option>
                   ))}
                 </select>
@@ -761,20 +762,24 @@ export default function LockhotDesk() {
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={handleWriteHeadlines}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border-[1.5px] border-model text-model rounded-[14px] hover:bg-model-soft transition-colors font-medium text-sm"
+              className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
+              style={{ backgroundColor: '#0F7FD8' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
             >
-              <span className="inline-block w-[5px] h-[5px] rounded-full bg-model"></span>
-              Write headlines
+              ✏️ Write headlines
             </button>
 
             {slides.some(s => s.kind === "campaign" && !s.imageKey) && (
               <button
                 onClick={handleGenerateCampaignPhoto}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border-[1.5px] border-model text-model rounded-[14px] hover:bg-model-soft transition-colors font-medium text-sm"
+                className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
+                style={{ backgroundColor: '#0F7FD8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
                 title="Generate a lifestyle photo for the campaign slide"
               >
-                <span className="inline-block w-[5px] h-[5px] rounded-full bg-model"></span>
-                Generate campaign photo
+                🖼️ Generate campaign photo
               </button>
             )}
 

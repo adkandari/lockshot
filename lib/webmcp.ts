@@ -315,7 +315,7 @@ export async function registerWebMCPTools(
           author: 'model' as const,
         };
 
-        const overflow = measureOverflow(newOverlay);
+        const overflow = measureOverflow(newOverlay, slide.templateId);
 
         setSlides(prev => prev.map(s => {
           if (s.id === slideId) {
