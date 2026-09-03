@@ -798,7 +798,7 @@ export default function LockhotDesk() {
             />
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Tray with horizontal scroll */}
       <div className="bg-tray rounded-[22px] p-6 shadow-[inset_0_1px_3px_rgba(25,26,28,0.08)] overflow-x-auto">
