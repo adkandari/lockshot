@@ -44,15 +44,16 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    // Extract colors for Perfect and Growth if needed
+    // Extract colors for Perfect template only
+    // Growth uses fixed Dysperse palette
     let extractedColors = null;
-    if ((slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top' || slide.kind === 'campaign') && screenshotImg) {
+    if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
       // Use slide override colors or extract from image
       if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
         extractedColors = {
-          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#44403c' : '#6d28d9'),
-          light: slide.colors.background || (slide.templateId === 'caption_top' ? '#f5f2ed' : '#f3e8ff'),
-          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#a8a29e' : '#c4b5fd'),
+          text: slide.colors.text || '#6d28d9',
+          light: slide.colors.background || '#f3e8ff',
+          dark: slide.colors.accent || '#c4b5fd',
         };
       } else {
         extractedColors = await extractDominantColor(screenshotImg);
@@ -64,7 +65,7 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
       await document.fonts.ready;
     }
 
-    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind);
+    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind, slide.colors);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -98,26 +99,26 @@ async function renderTemplate(
   overlay: { headline: string; subhead: string } | undefined,
   hasOverlay: boolean,
   extractedColors?: { light: string; dark: string; text: string } | null,
-  slideKind?: "campaign" | "product"
+  slideKind?: "campaign" | "product",
+  slideColors?: { text?: string; background?: string; accent?: string }
 ) {
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
 
   // Special case: Campaign slide for Growth template
   if (slideKind === "campaign") {
-    const cream = '#F3E8DA';
-    const sage = '#707D5D';
-    const terracotta = '#D4756E';
-    const darkText = '#44392D';
+    // Fixed Growth palette for campaign slides (from PR #25)
+    const colors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
+    const terracotta = 'rgb(195, 123, 84)';
     
     // 1. Fill with cream background
-    ctx.fillStyle = cream;
+    ctx.fillStyle = colors.light;
     ctx.fillRect(0, 0, width, height);
     
     // 2. Draw sage blob lower-left
     ctx.globalAlpha = 0.4;
     const blobBottomLeft = ctx.createRadialGradient(width * 0.15, height * 0.85, 0, width * 0.15, height * 0.85, width * 0.27);
-    blobBottomLeft.addColorStop(0, sage);
+    blobBottomLeft.addColorStop(0, colors.dark);
     blobBottomLeft.addColorStop(1, 'transparent');
     ctx.fillStyle = blobBottomLeft;
     ctx.beginPath();
@@ -135,19 +136,19 @@ async function renderTemplate(
       const textX = 100;
       let textY = height * 0.35; // Vertically centered-ish
       
-      ctx.font = `900 200px "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      ctx.font = `900 200px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       
       // Other words in dark text
-      ctx.fillStyle = darkText;
+      ctx.fillStyle = colors.text;
       for (const word of otherWords) {
         ctx.fillText(word.toLowerCase(), textX, textY);
         textY += 200;
       }
       
       // Last word in sage
-      ctx.fillStyle = sage;
+      ctx.fillStyle = colors.dark;
       ctx.fillText(lastWord.toLowerCase(), textX, textY);
       
       // Draw terracotta squiggle underline
@@ -174,8 +175,8 @@ async function renderTemplate(
       
       // Subhead in Courier Prime
       if (overlay.subhead) {
-        ctx.font = `700 56px "Courier Prime", "Courier New", monospace`;
-        ctx.fillStyle = darkText;
+        ctx.font = `700 56px Courier Prime, "Courier New", monospace`;
+        ctx.fillStyle = colors.text;
         wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
       }
     }
@@ -226,14 +227,20 @@ async function renderTemplate(
 
   switch (templateId) {
     case "caption_top": // Growth: Cream campaign energy with top type
-      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      // Fixed Growth palette (user overrides take precedence)
+      const growthDefaultColors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
+      const growthColors = {
+        light: slideColors?.background || growthDefaultColors.light,
+        dark: slideColors?.accent || growthDefaultColors.dark,
+        text: slideColors?.text || growthDefaultColors.text,
+      };
+      const growthTerracotta = 'rgb(195, 123, 84)';
       
       // 1. Fill with warm cream background
       ctx.fillStyle = growthColors.light;
       ctx.fillRect(0, 0, width, height);
       
       // 2. Draw soft organic blobs in corners
-      ctx.fillStyle = growthColors.dark;
       ctx.globalAlpha = 0.4;
       
       // Top-left blob
@@ -241,7 +248,7 @@ async function renderTemplate(
       const blob1Y = height * 0.1;
       const blob1R = width * 0.25;
       const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
-      gradient1.addColorStop(0, growthColors.dark);
+      gradient1.addColorStop(0, growthTerracotta);
       gradient1.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient1;
       ctx.beginPath();
@@ -254,7 +261,7 @@ async function renderTemplate(
       const blob2Y = height * 0.9;
       const blob2R = width * 0.22;
       const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
-      gradient2.addColorStop(0, growthColors.dark);
+      gradient2.addColorStop(0, growthTerracotta);
       gradient2.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient2;
       ctx.beginPath();
@@ -269,8 +276,8 @@ async function renderTemplate(
         let textY = 100;
         
         if (overlay.headline) {
-          ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = growthColors.text;
+          ctx.font = `700 110px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
+          ctx.fillStyle = growthColors.dark;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);
@@ -278,8 +285,7 @@ async function renderTemplate(
         }
         
         if (overlay.subhead) {
-          // Try to load serif font for subhead
-          ctx.font = `58px Georgia, "Source Serif 4", serif`;
+          ctx.font = `700 58px Courier Prime, "Courier New", monospace`;
           ctx.fillStyle = growthColors.text;
           ctx.globalAlpha = 0.85;
           ctx.textAlign = "left";
