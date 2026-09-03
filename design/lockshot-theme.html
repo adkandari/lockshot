@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lockshot - Paper/Ink/Azure Theme</title>
+  <style>
+    /* CSS Design Tokens - Paper/Ink/Azure System */
+    :root {
+      /* Colors */
+      --color-paper: #EFEDEA;
+      --color-surface: #FFFFFF;
+      --color-tray: #E3E0DB;
+      --color-ink: #191A1C;
+      --color-ink-2: #6B6C70;
+      --color-ink-3: #9B9C9F;
+      --color-line: rgba(25, 26, 28, 0.10);
+      --color-line-soft: rgba(25, 26, 28, 0.06);
+      --color-model: #0F7FD8;
+      --color-model-soft: rgba(15, 127, 216, 0.10);
+      --color-live: #1B9E5F;
+
+      /* Border Radius */
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --radius-sm: 9px;
+
+      /* Shadows */
+      --shadow-card: 0 1px 2px rgba(25, 26, 28, 0.04), 0 12px 28px -18px rgba(25, 26, 28, 0.28);
+
+      /* Typography */
+      --font-body: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--color-paper);
+      color: var(--color-ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Sticky Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--color-paper);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--color-line);
+      padding: 1.5rem 0;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .wordmark {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--color-ink);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--color-ink-3);
+      margin-top: 0.125rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--color-ink-2);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--color-live);
+      box-shadow: 0 0 0 3px var(--color-model-soft);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease;
+      font-family: var(--font-body);
+    }
+
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--color-ink-2);
+      border: 1px solid var(--color-line);
+    }
+
+    .btn-ghost:hover {
+      background-color: var(--color-line-soft);
+      border-color: var(--color-line);
+    }
+
+    .btn-filled {
+      background-color: var(--color-ink);
+      color: var(--color-surface);
+    }
+
+    .btn-filled:hover {
+      background-color: #000000;
+    }
+
+    .btn-model {
+      background-color: transparent;
+      color: var(--color-model);
+      border: 1.5px solid var(--color-model);
+    }
+
+    .btn-model:hover {
+      background-color: var(--color-model-soft);
+    }
+
+    .btn-model::before {
+      content: '';
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: var(--color-model);
+    }
+
+    /* Template Segmented Pill */
+    .template-selector {
+      display: inline-flex;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-md);
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+
+    .template-option {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      color: var(--color-ink-2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .template-option:hover {
+      background-color: var(--color-line-soft);
+    }
+
+    .template-option.active {
+      background-color: var(--color-ink);
+      color: var(--color-surface);
+    }
+
+    /* Locale Chips */
+    .locale-chips {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .locale-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .locale-chip:hover {
+      background-color: var(--color-line-soft);
+    }
+
+    .locale-chip .close {
+      color: var(--color-ink-3);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .locale-chip-add {
+      background-color: transparent;
+      border: 1.5px dashed var(--color-line);
+      color: var(--color-ink-2);
+    }
+
+    .locale-chip-add:hover {
+      border-color: var(--color-ink-2);
+      background-color: var(--color-line-soft);
+    }
+
+    /* Tray */
+    .tray {
+      background-color: var(--color-tray);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin: 2rem 0;
+      box-shadow: inset 0 1px 3px rgba(25, 26, 28, 0.08);
+      overflow-x: auto;
+    }
+
+    .tray-content {
+      display: flex;
+      gap: 1.5rem;
+      min-width: 380px;
+    }
+
+    /* Slide Card */
+    .slide-card {
+      background-color: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      min-width: 300px;
+      max-width: 340px;
+      flex: 0 0 auto;
+    }
+
+    .slide-canvas {
+      aspect-ratio: 1320 / 2868;
+      background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-ink-3);
+      font-size: 0.875rem;
+    }
+
+    .slide-footer {
+      padding: 1rem;
+      border-top: 1px solid var(--color-line-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slide-frame-number {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-ink-2);
+    }
+
+    .slide-lock {
+      font-size: 1rem;
+      color: var(--color-ink-3);
+    }
+
+    .slide-text {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--color-ink-2);
+    }
+
+    .slide-text-empty {
+      color: var(--color-model);
+    }
+
+    /* Campaign Cell */
+    .campaign-cell {
+      background-color: transparent;
+      border: 2px dashed var(--color-line);
+      border-radius: var(--radius-lg);
+      min-width: 300px;
+      max-width: 340px;
+      aspect-ratio: 1320 / 2868;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-ink-3);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .campaign-cell:hover {
+      border-color: var(--color-model);
+      background-color: var(--color-model-soft);
+    }
+
+    /* Empty State */
+    .empty-state {
+      max-width: 800px;
+      margin: 4rem auto;
+      text-align: left;
+    }
+
+    .empty-hero {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-ink);
+      line-height: 1.2;
+      margin-bottom: 2rem;
+    }
+
+    .drop-zone {
+      background-color: var(--color-surface);
+      border: 2px dashed var(--color-line);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 200ms ease;
+      margin-bottom: 2rem;
+    }
+
+    .drop-zone:hover {
+      border-color: var(--color-model);
+      background-color: var(--color-model-soft);
+    }
+
+    .drop-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .written-by {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.75rem 1.25rem;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--color-ink-2);
+      box-shadow: var(--shadow-card);
+    }
+
+    .written-by strong {
+      color: var(--color-ink);
+      font-weight: 600;
+    }
+
+    .note-list {
+      list-style: none;
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .note-list li {
+      padding-left: 1.5rem;
+      position: relative;
+      font-size: 0.9375rem;
+      color: var(--color-ink-2);
+    }
+
+    .note-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--color-model);
+    }
+
+    /* Tray Head Button */
+    .tray-head-btn {
+      background-color: transparent;
+      color: var(--color-ink-2);
+      border: 1px solid var(--color-line);
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tray-head-btn:hover {
+      background-color: var(--color-line-soft);
+    }
+
+    .workspace-content {
+      padding: 2rem 0;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Sticky Header -->
+    <header class="header">
+      <div class="header-content">
+        <div>
+          <h1 class="wordmark">Lockshot</h1>
+          <p class="subtitle">App Store Screenshot Localization</p>
+        </div>
+        <div class="header-actions">
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>WebMCP Active</span>
+          </div>
+          <button class="btn btn-ghost">Start over</button>
+          <button class="btn btn-filled">Export set</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace Content -->
+    <div class="workspace-content">
+      <!-- Template Selector -->
+      <div style="margin-bottom: 1.5rem;">
+        <div class="template-selector">
+          <button class="template-option active">Perfect</button>
+          <button class="template-option">Growth</button>
+          <button class="template-option">Astra</button>
+        </div>
+      </div>
+
+      <!-- Locale Chips -->
+      <div class="locale-chips" style="margin-bottom: 1.5rem;">
+        <div class="locale-chip">
+          <span>en</span>
+          <span class="close">×</span>
+        </div>
+        <div class="locale-chip">
+          <span>de</span>
+          <span class="close">×</span>
+        </div>
+        <div class="locale-chip">
+          <span>ja</span>
+          <span class="close">×</span>
+        </div>
+        <div class="locale-chip locale-chip-add">
+          + Add locale
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <button class="btn btn-model">Write headlines</button>
+        <button class="btn btn-model">Generate campaign photo</button>
+        <button class="tray-head-btn">Replace screenshots</button>
+      </div>
+
+      <!-- Tray -->
+      <div class="tray">
+        <div class="tray-content">
+          <!-- Product Slides -->
+          <div class="slide-card">
+            <div class="slide-canvas">
+              app screens
+            </div>
+            <div class="slide-footer">
+              <span class="slide-frame-number">#1</span>
+              <span class="slide-lock">🔓</span>
+            </div>
+            <div class="slide-text">
+              <div><strong>Headline:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+              <div><strong>Subhead:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+            </div>
+          </div>
+
+          <div class="slide-card">
+            <div class="slide-canvas">
+              app screens
+            </div>
+            <div class="slide-footer">
+              <span class="slide-frame-number">#2</span>
+              <span class="slide-lock">🔓</span>
+            </div>
+            <div class="slide-text">
+              <div><strong>Headline:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+              <div><strong>Subhead:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+            </div>
+          </div>
+
+          <div class="slide-card">
+            <div class="slide-canvas">
+              app screens
+            </div>
+            <div class="slide-footer">
+              <span class="slide-frame-number">#3</span>
+              <span class="slide-lock">🔓</span>
+            </div>
+            <div class="slide-text">
+              <div><strong>Headline:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+              <div><strong>Subhead:</strong> <span style="color: var(--color-model);">Ask the model</span></div>
+            </div>
+          </div>
+
+          <!-- Campaign Cell -->
+          <div class="campaign-cell">
+            + Campaign photo
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State Example -->
+      <div class="empty-state" style="margin-top: 4rem;">
+        <h2 class="empty-hero">Ship the same app screens in every language.</h2>
+        
+        <div class="drop-zone">
+          <div class="drop-icon">📸</div>
+          <p style="font-size: 1.125rem; font-weight: 600; color: var(--color-ink); margin-bottom: 0.5rem;">Drop screenshots here</p>
+          <p style="font-size: 0.875rem; color: var(--color-ink-2);">Or click to select images</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div class="written-by">
+            Copy is written by · <strong>ChatGPT</strong>, over MCP
+          </div>
+        </div>
+
+        <ul class="note-list">
+          <li>Pick a template (Perfect / Growth / Astra)</li>
+          <li>Add locales — ChatGPT writes them via MCP tools</li>
+          <li>Export size: <strong>1320 × 2868</strong> pixels per frame</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

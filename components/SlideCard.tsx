@@ -11,6 +11,7 @@ interface SlideCardProps {
   onToggleLock: (slideId: number) => void;
   onFileUpload: (file: File) => void;
   onColorChange?: (slideId: number, colors: { text?: string; background?: string; accent?: string }) => void;
+  onOverlayChange?: (slideId: number, headline: string, subhead: string) => void;
 }
 
 export default function SlideCard({
@@ -19,12 +20,15 @@ export default function SlideCard({
   onToggleLock,
   onFileUpload,
   onColorChange,
+  onOverlayChange,
 }: SlideCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<{ light: string; dark: string; text: string } | null>(null);
+  const [editingField, setEditingField] = useState<'headline' | 'subhead' | null>(null);
+  const [editValue, setEditValue] = useState('');
   
-  const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '' };
+  const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '', author: undefined };
   const isOverflowing = slide.overflow[currentLocale] || false;
   const isLocked = slide.locked;
   const hasOverlay = overlay.headline || overlay.subhead;
@@ -258,32 +262,34 @@ export default function SlideCard({
           </>
         );
 
-      case "framed_on_gradient": // Bold: Dark navy + lavender
+      case "framed_on_gradient": // Astra: Dark navy + lavender
         return (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
-            <div className="absolute inset-0 flex flex-col items-center px-8 py-12">
-              {hasOverlay && overlay.headline && (
-                <div className="text-center mb-8 z-10 max-w-[85%]">
-                  <h2 className={`text-4xl font-black text-white leading-tight ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                    {overlay.headline}
-                  </h2>
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12">
+              {hasOverlay && (
+                <div className="text-center mb-10 z-10 max-w-[85%]">
+                  {overlay.headline && (
+                    <h2 className={`text-4xl font-black text-white leading-tight mb-4 ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.headline}
+                    </h2>
+                  )}
+                  {overlay.subhead && (
+                    <p className={`text-lg text-purple-200 leading-relaxed ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                      {overlay.subhead}
+                    </p>
+                  )}
                 </div>
               )}
               {imageUrl && (
-                <div className="relative flex-1 flex items-center justify-center w-full">
-                  <div className="relative w-[65%] max-h-full flex items-center justify-center" style={{ aspectRatio: '9 / 19.5' }}>
-                    <div className="absolute inset-0 bg-purple-300/20 rounded-[2.5rem]" style={{ padding: '0.8cqh' }}>
-                      <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden">
-                        <img
-                          src={imageUrl}
-                          alt={`Slide ${slide.id}`}
-                          className="w-full h-full object-contain"
-                          crossOrigin="anonymous"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                <div className="relative w-[65%] aspect-[9/19.5] bg-black rounded-[3.5rem] shadow-2xl overflow-hidden">
+                  <div className="absolute inset-0 rounded-[3.5rem] ring-2 ring-purple-400/30 ring-inset"></div>
+                  <img
+                    src={imageUrl}
+                    alt={`Slide ${slide.id}`}
+                    className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
+                  />
                 </div>
               )}
             </div>
@@ -396,7 +402,7 @@ export default function SlideCard({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-surface rounded-[22px] shadow-card overflow-hidden">
       <div className="relative group">
         <div className="aspect-[1320/2868] relative overflow-hidden bg-gray-100 [container-type:size]">
           {renderTemplate()}
@@ -407,18 +413,6 @@ export default function SlideCard({
             </div>
           )}
 
-          {isLocked && (
-            <div className="absolute top-2 left-2 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium z-20">
-              🔒 Locked
-            </div>
-          )}
-
-          <button
-            onClick={handleFileClick}
-            className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors z-20"
-          >
-            📷 Change Image
-          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -429,169 +423,130 @@ export default function SlideCard({
         </div>
       </div>
 
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">
-            Slide {slide.id}
-          </h3>
+      <div className="px-4 py-3 border-t border-line-soft">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-jetbrains text-ink-2">
+            #{slide.id}
+          </span>
           <button
             onClick={() => onToggleLock(slide.id)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              isLocked
-                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className="text-base text-ink-3 hover:text-ink transition-colors"
           >
-            {isLocked ? "🔒 Locked" : "🔓 Unlocked"}
+            {isLocked ? "🔒" : "🔓"}
           </button>
         </div>
 
-        {/* Color pickers for Perfect template */}
-        {slide.templateId === 'full_bleed_caption_bottom' && onColorChange && (
-          <div className="mb-3 pb-3 border-b border-gray-200">
-            <p className="text-xs font-medium text-gray-600 mb-2">Perfect Colors:</p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Text:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.text || (extractedColors?.text || '#6d28d9')}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, text: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Bg:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.background || (extractedColors?.light || '#f3e8ff')}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, background: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Accent:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.accent || (extractedColors?.dark || '#c4b5fd')}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              {slide.colors && (
-                <button
-                  onClick={() => {
-                    onColorChange(slide.id, {});
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-700 underline"
-                  title="Reset to auto-sampled colors"
-                >
-                  Auto
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Color pickers for Growth template */}
-        {slide.templateId === 'caption_top' && slide.kind !== 'campaign' && onColorChange && (
-          <div className="mb-3 pb-3 border-b border-gray-200">
-            <p className="text-xs font-medium text-gray-600 mb-2">Growth Colors:</p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Text:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.text || '#44392D'}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, text: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Bg:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.background || '#F3E8DA'}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, background: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-600">Accent:</span>
-                <input
-                  type="color"
-                  value={slide.colors?.accent || '#707D5D'}
-                  onChange={(e) => {
-                    onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
-                  }}
-                  className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-              </label>
-              {slide.colors && (
-                <button
-                  onClick={() => {
-                    onColorChange(slide.id, {});
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-700 underline"
-                  title="Reset to Growth theme colors"
-                >
-                  Auto
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {slide.comments.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <p className="text-xs font-medium text-gray-600">
-              Agent Comments:
-            </p>
-            {slide.comments.map((comment, idx) => (
-              <div
-                key={idx}
-                className="text-xs bg-blue-50 text-blue-900 p-2 rounded border border-blue-200"
-              >
-                {comment}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-3 space-y-2">
-          <div className="text-xs text-gray-500 mb-2">
-            <strong>Template:</strong> {slide.templateId.replace(/_/g, ' ')}
-          </div>
+        <div className="space-y-2 text-sm">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Headline:</label>
-            <input
-              type="text"
-              value={overlay.headline || ''}
-              placeholder="Ask the model"
-              readOnly
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700"
-            />
+            <div className="text-[11px] text-ink-3 mb-1">
+              Headline
+              {overlay.author && (
+                <span className="ml-1.5 text-[10px] text-ink-3">
+                  · {overlay.author === 'model' ? 'ChatGPT' : 'Edited'}
+                </span>
+              )}
+            </div>
+            {editingField === 'headline' ? (
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => {
+                  if (onOverlayChange && editValue !== overlay.headline) {
+                    onOverlayChange(slide.id, editValue, overlay.subhead);
+                  }
+                  setEditingField(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (onOverlayChange && editValue !== overlay.headline) {
+                      onOverlayChange(slide.id, editValue, overlay.subhead);
+                    }
+                    setEditingField(null);
+                  } else if (e.key === 'Escape') {
+                    setEditingField(null);
+                  }
+                }}
+                autoFocus
+                className="w-full px-2 py-1 text-ink bg-surface border border-model rounded-[9px] focus:outline-none focus:ring-1 focus:ring-model"
+              />
+            ) : overlay.headline ? (
+              <div
+                onClick={() => {
+                  setEditingField('headline');
+                  setEditValue(overlay.headline);
+                }}
+                className="text-ink-2 leading-snug cursor-text hover:text-ink transition-colors"
+              >
+                {overlay.headline}
+              </div>
+            ) : (
+              <div
+                onClick={() => {
+                  setEditingField('headline');
+                  setEditValue('');
+                }}
+                className="text-model leading-snug cursor-text hover:underline"
+              >
+                Ask the model
+              </div>
+            )}
           </div>
           {slide.templateId !== 'framed_on_gradient' && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Subhead:</label>
-              <input
-                type="text"
-                value={overlay.subhead || ''}
-                placeholder="Ask the model"
-                readOnly
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700"
-              />
+              <div className="text-[11px] text-ink-3 mb-1">
+                Subhead
+                {overlay.author && (
+                  <span className="ml-1.5 text-[10px] text-ink-3">
+                    · {overlay.author === 'model' ? 'ChatGPT' : 'Edited'}
+                  </span>
+                )}
+              </div>
+              {editingField === 'subhead' ? (
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={() => {
+                    if (onOverlayChange && editValue !== overlay.subhead) {
+                      onOverlayChange(slide.id, overlay.headline, editValue);
+                    }
+                    setEditingField(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (onOverlayChange && editValue !== overlay.subhead) {
+                        onOverlayChange(slide.id, overlay.headline, editValue);
+                      }
+                      setEditingField(null);
+                    } else if (e.key === 'Escape') {
+                      setEditingField(null);
+                    }
+                  }}
+                  autoFocus
+                  className="w-full px-2 py-1 text-ink bg-surface border border-model rounded-[9px] focus:outline-none focus:ring-1 focus:ring-model"
+                />
+              ) : overlay.subhead ? (
+                <div
+                  onClick={() => {
+                    setEditingField('subhead');
+                    setEditValue(overlay.subhead);
+                  }}
+                  className="text-ink-2 leading-snug cursor-text hover:text-ink transition-colors"
+                >
+                  {overlay.subhead}
+                </div>
+              ) : (
+                <div
+                  onClick={() => {
+                    setEditingField('subhead');
+                    setEditValue('');
+                  }}
+                  className="text-model leading-snug cursor-text hover:underline"
+                >
+                  Ask the model
+                </div>
+              )}
             </div>
           )}
         </div>
