@@ -68,8 +68,8 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
     
   } else {
     // Studio template (full_bleed_caption_bottom) and default: System font 120px + 56px
-    const textPadding = 100;
-    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1120px
+    const textPadding = 120;
+    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1080px
     const textStartY = 60;
     
     let textBottom = textStartY;

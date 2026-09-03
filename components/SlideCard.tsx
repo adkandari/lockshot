@@ -289,7 +289,7 @@ export default function SlideCard({
             <div className="absolute inset-0 flex flex-col">
               {/* Type band - flex-shrink-0 with container-relative sizing */}
               {hasOverlay && (
-                <div className="flex-shrink-0 z-20" style={{ padding: '2.1cqh 3.5cqw' }}>
+                <div className="flex-shrink-0 z-20" style={{ padding: '2.1cqh 8cqw' }}>
                   {overlay.headline && (
                     <h2 
                       className={`font-black leading-tight tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
@@ -366,9 +366,19 @@ export default function SlideCard({
 
       <div className="px-4 py-3 border-t border-line-soft">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-jetbrains text-ink-2">
-            #{slide.id}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-jetbrains text-ink-2">
+              #{slide.id}
+            </span>
+            {(slide.kind !== "campaign" || (slide.kind === "campaign" && (slide.imageKey || slide.backgroundImage))) && (
+              <button
+                onClick={handleFileClick}
+                className="text-xs px-2 py-1 bg-paper text-ink-2 hover:text-ink border border-line rounded-md transition-colors"
+              >
+                Change image
+              </button>
+            )}
+          </div>
           <button
             onClick={() => onToggleLock(slide.id)}
             className="text-base text-ink-3 hover:text-ink transition-colors"
