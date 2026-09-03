@@ -27,7 +27,8 @@ export default function SlideCard({
   const [extractedColors, setExtractedColors] = useState<{ light: string; dark: string; text: string } | null>(null);
   
   const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '', author: undefined };
-  const isOverflowing = slide.overflow[currentLocale] || false;
+  const hasContent = overlay.headline || overlay.subhead;
+  const isOverflowing = hasContent && (slide.overflow[currentLocale] || false);
   const isLocked = slide.locked;
   const hasOverlay = overlay.headline || overlay.subhead;
 

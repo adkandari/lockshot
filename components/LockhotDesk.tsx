@@ -156,16 +156,15 @@ export default function LockhotDesk() {
     setLocales(updatedLocales);
 
     const updatedSlides = slides.map(slide => {
-      const enOverlay = slide.overlays['en'] || { headline: '', subhead: '' };
       return {
         ...slide,
         overlays: {
           ...slide.overlays,
-          [locale]: { ...enOverlay },
+          [locale]: { headline: '', subhead: '' },
         },
         overflow: {
           ...slide.overflow,
-          [locale]: measureOverflow(enOverlay),
+          [locale]: false,
         },
       };
     });
@@ -192,7 +191,18 @@ export default function LockhotDesk() {
       let updated = prev.map(s => {
         if (slideId && s.id !== slideId) return s;
         if (!slideId && s.locked) return s;
-        return { ...s, templateId: template };
+        
+        // Update templateId and remeasure overflow for all locales
+        const updatedSlide = { ...s, templateId: template };
+        const newOverflow: Record<string, boolean> = {};
+        
+        Object.keys(s.overlays).forEach(locale => {
+          const overlay = s.overlays[locale];
+          newOverflow[locale] = measureOverflow(overlay, template);
+        });
+        
+        updatedSlide.overflow = newOverflow;
+        return updatedSlide;
       });
       
       // Handle campaign slide for Growth template
@@ -656,8 +666,10 @@ export default function LockhotDesk() {
             </div>
           )}
           
-          <div className="inline-flex bg-surface border border-line rounded-[14px] p-1 gap-1">
-            {TEMPLATES.map(template => {
+          <div className="space-y-2">
+            <label className="text-[11px] text-ink-3 px-1">Template</label>
+            <div className="inline-flex bg-surface border border-line rounded-[14px] p-1 gap-1">
+              {TEMPLATES.map(template => {
               // Determine active template (most common among slides)
               const templateCounts = slides.reduce((acc, slide) => {
                 acc[slide.templateId] = (acc[slide.templateId] || 0) + 1;
@@ -682,10 +694,13 @@ export default function LockhotDesk() {
                 </button>
               );
             })}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {locales.map((locale) => {
+          <div className="space-y-2">
+            <label className="text-[11px] text-ink-3 px-1">Locale</label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {locales.map((locale) => {
               const localeInfo = COMMON_LOCALES.find(l => l.code === locale);
               return (
                 <button
@@ -756,7 +771,8 @@ export default function LockhotDesk() {
               >
                 + Add locale
               </button>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
@@ -874,44 +890,6 @@ export default function LockhotDesk() {
               </div>
             );
           })()}
-        </div>
-      </div>
-
-      {/* Copy Desk Table */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-ink mb-4">Copy Desk</h3>
-        <div className="bg-surface border border-line rounded-[22px] overflow-hidden shadow-card">
-          <table className="w-full text-sm">
-            <thead className="bg-tray border-b border-line">
-              <tr>
-                <th className="text-left px-4 py-3 text-ink-2 font-medium">#</th>
-                <th className="text-left px-4 py-3 text-ink-2 font-medium">Headline</th>
-                <th className="text-left px-4 py-3 text-ink-2 font-medium">Subhead</th>
-                <th className="text-left px-4 py-3 text-ink-2 font-medium">Written by</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...slides.filter(s => s.kind === "campaign"), ...slides.filter(s => s.kind !== "campaign")].map((slide, idx) => {
-                const overlay = slide.overlays[currentLocale] || { headline: '', subhead: '', author: undefined };
-                return (
-                  <tr key={slide.id} className={idx > 0 ? 'border-t border-line-soft' : ''}>
-                    <td className="px-4 py-3 text-ink-3 font-jetbrains">
-                      {slide.kind === "campaign" ? "0" : slide.id}
-                    </td>
-                    <td className="px-4 py-3 text-ink-2">
-                      {overlay.headline || <span className="text-ink-3 italic">Empty</span>}
-                    </td>
-                    <td className="px-4 py-3 text-ink-2">
-                      {overlay.subhead || <span className="text-ink-3 italic">Empty</span>}
-                    </td>
-                    <td className="px-4 py-3 text-ink-3 text-xs">
-                      {overlay.author === 'model' ? 'ChatGPT' : overlay.author === 'user' ? 'Edited' : '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
