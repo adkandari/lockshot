@@ -93,16 +93,16 @@ export default function LockhotDesk() {
   const loadSampleScreenshots = async () => {
     try {
       const sampleFiles = [
-        '/samples/01-home.svg',
-        '/samples/02-roast.svg',
-        '/samples/03-call.svg'
+        '/assets/sc1.png',
+        '/assets/sc2.png',
+        '/assets/sc3.png'
       ];
 
       const newSlides = await Promise.all(
         sampleFiles.map(async (path, index) => {
           const response = await fetch(path);
           const blob = await response.blob();
-          const file = new File([blob], path.split('/').pop() || 'sample.svg', { type: 'image/svg+xml' });
+          const file = new File([blob], path.split('/').pop() || 'sample.png', { type: 'image/png' });
           
           const imageKey = `sample-${Date.now()}-${index}`;
           await saveImage(imageKey, file);
@@ -611,13 +611,13 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
           {/* Sample screenshots preview */}
           <div className="mb-8 flex items-center justify-center gap-4">
             <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/samples/01-home.svg" alt="Sample 1" className="w-full h-full object-cover" />
+              <img src="/assets/sc1.png" alt="Sample 1" className="w-full h-full object-cover" />
             </div>
             <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/samples/02-roast.svg" alt="Sample 2" className="w-full h-full object-cover" />
+              <img src="/assets/sc2.png" alt="Sample 2" className="w-full h-full object-cover" />
             </div>
             <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/samples/03-call.svg" alt="Sample 3" className="w-full h-full object-cover" />
+              <img src="/assets/sc3.png" alt="Sample 3" className="w-full h-full object-cover" />
             </div>
           </div>
           
