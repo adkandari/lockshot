@@ -47,6 +47,7 @@ export default function LockhotDesk() {
   const [isDragging, setIsDragging] = useState(false);
   const [showEmptyState, setShowEmptyState] = useState(true);
   const [copyToast, setCopyToast] = useState("");
+  const [alertBanner, setAlertBanner] = useState<{ type: 'write-headlines' | 'generate-campaign'; visible: boolean } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slidesRef = useRef(slides);
@@ -203,7 +204,7 @@ export default function LockhotDesk() {
             id: 0,
             templateId: "caption_top",
             backgroundImage: '',
-            overlays: { en: { headline: '', subhead: '' } },
+            overlays: { en: { headline: 'focus plan thrive', subhead: 'Less distraction. More direction.' } },
             locked: false,
             comments: [],
             overflow: { en: false },
@@ -364,8 +365,8 @@ export default function LockhotDesk() {
     if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
       try {
         await (window as any).openai.sendFollowUpMessage({ prompt });
-        setCopyToast("Sent to chat");
-        setTimeout(() => setCopyToast(""), 3000);
+        setAlertBanner({ type: 'write-headlines', visible: true });
+        setTimeout(() => setAlertBanner(null), 10000);
         return;
       } catch (e) {
         console.log("sendFollowUpMessage failed, trying postMessage");
@@ -383,8 +384,8 @@ export default function LockhotDesk() {
             content: [{ type: "text", text: prompt }]
           }
         }, "*");
-        setCopyToast("Sent to chat");
-        setTimeout(() => setCopyToast(""), 3000);
+        setAlertBanner({ type: 'write-headlines', visible: true });
+        setTimeout(() => setAlertBanner(null), 10000);
         return;
       } catch (e) {
         console.log("postMessage failed, falling back to clipboard");
@@ -394,8 +395,8 @@ export default function LockhotDesk() {
     // Fallback: clipboard
     try {
       await navigator.clipboard.writeText(prompt);
-      setCopyToast("Copied — paste it in the ChatGPT chat");
-      setTimeout(() => setCopyToast(""), 3000);
+      setAlertBanner({ type: 'write-headlines', visible: true });
+      setTimeout(() => setAlertBanner(null), 10000);
     } catch (e) {
       setCopyToast("Failed to copy");
       setTimeout(() => setCopyToast(""), 3000);
@@ -403,14 +404,58 @@ export default function LockhotDesk() {
   };
 
   const handleGenerateCampaignPhoto = async () => {
-    const prompt = "Generate a vertical (9:16 aspect ratio) photorealistic lifestyle photo for an app marketing campaign. Style: warm cream/beige studio background, organic natural feel, soft lighting, minimalist composition. NO user interface elements, NO text overlays, NO devices. Think elegant product photography meets lifestyle brand aesthetic. The photo should complement a modern productivity/wellness app.";
+    // Seed campaign overlay if empty
+    const campaignSlide = slides.find(s => s.kind === "campaign");
+    if (campaignSlide) {
+      const overlay = campaignSlide.overlays[currentLocale];
+      if (!overlay || (!overlay.headline && !overlay.subhead)) {
+        // Set default overlay for current locale
+        setSlides(prev => prev.map(s => {
+          if (s.kind === "campaign") {
+            return {
+              ...s,
+              overlays: {
+                ...s.overlays,
+                [currentLocale]: {
+                  headline: currentLocale === 'en' ? 'focus plan thrive' : 'focus plan thrive',
+                  subhead: currentLocale === 'en' ? 'Less distraction. More direction.' : 'Less distraction. More direction.',
+                }
+              }
+            };
+          }
+          return s;
+        }));
+        
+        if (currentProject) {
+          const updatedSlides = slides.map(s => {
+            if (s.kind === "campaign") {
+              return {
+                ...s,
+                overlays: {
+                  ...s.overlays,
+                  [currentLocale]: {
+                    headline: currentLocale === 'en' ? 'focus plan thrive' : 'focus plan thrive',
+                    subhead: currentLocale === 'en' ? 'Less distraction. More direction.' : 'Less distraction. More direction.',
+                  }
+                }
+              };
+            }
+            return s;
+          });
+          const updatedProject = { ...currentProject, slides: updatedSlides };
+          setCurrentProject(updatedProject);
+        }
+      }
+    }
+    
+    const prompt = "Use the site tools. First, check get_page_state to see the campaign slide overlay. If the campaign slide (id=0) has empty overlay text, use set_overlay to set: headline='focus plan thrive' (three lowercase words), subhead='Less distraction. More direction.' (short tagline) for the current locale.\n\nThen generate a vertical (9:16 aspect ratio) photorealistic lifestyle photo for the campaign. Style: warm cream/beige studio background, organic natural feel, soft lighting, minimalist composition. NO user interface elements, NO text overlays, NO words, NO devices, NO phone. Think elegant lifestyle portrait. The photo should complement a modern productivity/wellness app. The user will drop this generated image on the campaign slot (not Replace Screenshots). The overlay text will be composited on top by Lockshot.";
     
     // Try sendFollowUpMessage
     if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
       try {
         await (window as any).openai.sendFollowUpMessage({ prompt });
-        setCopyToast("Image generation request sent to chat");
-        setTimeout(() => setCopyToast(""), 3000);
+        setAlertBanner({ type: 'generate-campaign', visible: true });
+        setTimeout(() => setAlertBanner(null), 12000);
         return;
       } catch (e) {
         console.log("sendFollowUpMessage failed");
@@ -428,8 +473,8 @@ export default function LockhotDesk() {
             content: [{ type: "text", text: prompt }]
           }
         }, "*");
-        setCopyToast("Image generation request sent to chat");
-        setTimeout(() => setCopyToast(""), 3000);
+        setAlertBanner({ type: 'generate-campaign', visible: true });
+        setTimeout(() => setAlertBanner(null), 12000);
         return;
       } catch (e) {
         console.log("postMessage failed");
@@ -439,8 +484,8 @@ export default function LockhotDesk() {
     // Fallback: clipboard
     try {
       await navigator.clipboard.writeText(prompt);
-      setCopyToast("Copied image prompt — paste it in ChatGPT");
-      setTimeout(() => setCopyToast(""), 3000);
+      setAlertBanner({ type: 'generate-campaign', visible: true });
+      setTimeout(() => setAlertBanner(null), 12000);
     } catch (e) {
       setCopyToast("Failed to copy");
       setTimeout(() => setCopyToast(""), 3000);
@@ -548,6 +593,38 @@ export default function LockhotDesk() {
         )}
 
         <div className="space-y-4">
+          {/* Alert Banner */}
+          {alertBanner?.visible && (
+            <div 
+              className="relative bg-indigo-600 text-white px-6 py-4 rounded-lg shadow-lg border-l-4 border-indigo-800 flex items-start gap-4"
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="flex-shrink-0 text-2xl">
+                {alertBanner.type === 'write-headlines' ? '✏️' : '🖼️'}
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-lg mb-1">
+                  {alertBanner.type === 'write-headlines' 
+                    ? 'Copied — paste it in the ChatGPT chat' 
+                    : 'Copied — paste it in the ChatGPT chat'}
+                </div>
+                <div className="text-sm text-indigo-100">
+                  {alertBanner.type === 'write-headlines'
+                    ? 'ChatGPT will write overlay text for your slides using the site tools.'
+                    : 'ChatGPT will set the campaign overlay text and generate a text-free lifestyle photo. Drop the generated photo on the campaign slot below (not Replace Screenshots).'}
+                </div>
+              </div>
+              <button
+                onClick={() => setAlertBanner(null)}
+                className="flex-shrink-0 text-white hover:text-indigo-200 text-xl font-bold"
+                aria-label="Dismiss alert"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          
           <div className="flex items-center gap-3 flex-wrap">
             <label className="text-sm font-medium text-gray-700">Template:</label>
             {TEMPLATES.map(template => {
@@ -687,12 +764,6 @@ export default function LockhotDesk() {
             >
               Export ZIP
             </button>
-            
-            {copyToast && (
-              <span className="text-sm text-green-600 font-medium">
-                {copyToast}
-              </span>
-            )}
           </div>
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
@@ -723,31 +794,18 @@ export default function LockhotDesk() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {slides.filter(s => s.kind !== "campaign").map((slide) => (
-          <SlideCard
-            key={slide.id}
-            slide={slide}
-            currentLocale={currentLocale}
-            onToggleLock={toggleLock}
-            onFileUpload={(file) => handleFileUpload(slide.id, file)}
-            onColorChange={handleColorChange}
-          />
-        ))}
-      </div>
-      
-      {/* Campaign slide section for Growth template */}
+      {/* Campaign slide section for Growth template - at the TOP */}
       {slides.some(s => s.templateId === "caption_top") && (() => {
         const campaignSlide = slides.find(s => s.kind === "campaign");
         if (!campaignSlide) return null;
         
         return (
-          <div className="mt-8 border-t-2 border-gray-200 pt-8">
+          <div className="mb-8 pb-8 border-b-2 border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              📸 Campaign / Lifestyle Slide (Growth only)
+              📸 Campaign Slide (Growth template)
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Optional marketing slide that appears first in your export. Drop a ChatGPT-generated lifestyle photo here.
+              Marketing slide that appears first in your export. Drop a ChatGPT-generated lifestyle photo here after clicking Generate Campaign Photo.
             </p>
             
             {!campaignSlide.imageKey && !campaignSlide.backgroundImage ? (
@@ -770,24 +828,41 @@ export default function LockhotDesk() {
                   };
                   input.click();
                 }}
-                className="border-4 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all"
+                className="border-4 border-dashed border-indigo-300 rounded-xl p-12 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 transition-all bg-indigo-50/20"
               >
                 <div className="text-5xl mb-3">🖼️</div>
-                <p className="text-lg font-medium text-gray-700">Drop a ChatGPT-generated lifestyle photo</p>
+                <p className="text-lg font-medium text-gray-700">Drop ChatGPT-generated lifestyle photo here</p>
                 <p className="text-sm text-gray-500 mt-2">Click to select or drag and drop</p>
+                <p className="text-xs text-indigo-600 mt-3 font-medium">Text overlay will be composited by Lockshot</p>
               </div>
             ) : (
-              <SlideCard
-                slide={campaignSlide}
-                currentLocale={currentLocale}
-                onToggleLock={toggleLock}
-                onFileUpload={handleCampaignUpload}
-                onColorChange={handleColorChange}
-              />
+              <div className="max-w-md">
+                <SlideCard
+                  slide={campaignSlide}
+                  currentLocale={currentLocale}
+                  onToggleLock={toggleLock}
+                  onFileUpload={handleCampaignUpload}
+                  onColorChange={handleColorChange}
+                />
+              </div>
             )}
           </div>
         );
       })()}
+
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Slides</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {slides.filter(s => s.kind !== "campaign").map((slide) => (
+          <SlideCard
+            key={slide.id}
+            slide={slide}
+            currentLocale={currentLocale}
+            onToggleLock={toggleLock}
+            onFileUpload={(file) => handleFileUpload(slide.id, file)}
+            onColorChange={handleColorChange}
+          />
+        ))}
+      </div>
     </div>
   );
 }
