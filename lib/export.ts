@@ -429,7 +429,7 @@ async function renderTemplate(
       // 3. Draw headline at top - tighter spacing
       let perfectTextBottom = 60;
       if (hasOverlay && overlay) {
-        const textPadding = 100;
+        const textPadding = 120;
         let textY = 60;
         
         if (overlay.headline) {
