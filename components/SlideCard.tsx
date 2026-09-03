@@ -37,8 +37,8 @@ export default function SlideCard({
       createImageURL(slide.imageKey).then(url => {
         if (url) {
           setImageUrl(url);
-          // Extract color ONLY for Perfect template (full_bleed_caption_bottom)
-          // Growth uses fixed Dysperse palette
+          // Extract color ONLY for Studio template (full_bleed_caption_bottom)
+          // Campaign uses fixed Dysperse palette
           if (slide.templateId === 'full_bleed_caption_bottom') {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -82,9 +82,9 @@ export default function SlideCard({
   };
 
   const renderTemplate = () => {
-    // Special case: Campaign slide for Growth template
+    // Special case: Campaign slide for Campaign template
     if (slide.kind === "campaign") {
-      // Fixed Growth palette for campaign slides (from PR #25)
+      // Fixed Campaign palette for campaign slides (from PR #25)
       const colors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
       const terracotta = 'rgb(195, 123, 84)';
       
@@ -127,8 +127,8 @@ export default function SlideCard({
     }
     
     switch (slide.templateId) {
-      case "caption_top": // Growth: Cream campaign energy with top type
-        // Fixed Growth palette (user overrides take precedence)
+      case "caption_top": // Campaign: Cream campaign energy with top type
+        // Fixed Campaign palette (user overrides take precedence)
         const growthNormalizedColors = {
           text: slide.colors?.text || 'rgb(68, 57, 45)',
           background: slide.colors?.background || 'rgb(243, 232, 218)',
@@ -209,7 +209,7 @@ export default function SlideCard({
           </>
         );
 
-      case "framed_on_gradient": // Bold: Dark navy + lavender
+      case "framed_on_gradient": // Poster: Dark navy + lavender
         return (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
@@ -258,7 +258,7 @@ export default function SlideCard({
           </>
         );
 
-      case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
+      case "full_bleed_caption_bottom": // Studio: Organic background + centered phone
       default:
         // Normalize colors from either slide overrides or auto-sampled
         const normalizedColors = {

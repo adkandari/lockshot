@@ -31,9 +31,9 @@ const COMMON_LOCALES = [
 ];
 
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
-  { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
-  { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
-  { id: "framed_on_gradient", name: "Bold", description: "Dark navy with lavender accents" },
+  { id: "full_bleed_caption_bottom", name: "Studio", description: "Organic two-tone palette with centered phone frame" },
+  { id: "caption_top", name: "Campaign", description: "Warm cream campaign energy, title over thin-bezel phone" },
+  { id: "framed_on_gradient", name: "Poster", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -205,7 +205,7 @@ export default function LockhotDesk() {
         return updatedSlide;
       });
       
-      // Handle campaign slide for Growth template
+      // Handle campaign slide for Campaign template
       if (template === "caption_top" && !slideId) {
         // Add empty campaign slide if it doesn't exist
         const hasCampaign = updated.some(s => s.kind === "campaign");
@@ -394,7 +394,7 @@ export default function LockhotDesk() {
     let prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
     
     if (hasGrowth && campaignEmpty) {
-      prompt += "\n\nIMPORTANT: This project uses the Growth template with an optional campaign slide. The campaign slide needs a designed graphic with typography. You can generate one later with the 'Generate campaign photo' button, which will create a finished 9:16 marketing image with the campaign overlay text rendered into it.";
+      prompt += "\n\nIMPORTANT: This project uses the Campaign template with an optional campaign slide. The campaign slide needs a designed graphic with typography. You can generate one later with the 'Generate campaign photo' button, which will create a finished 9:16 marketing image with the campaign overlay text rendered into it.";
     }
     
     // Try 1: ChatGPT Apps sendFollowUpMessage
@@ -589,7 +589,7 @@ export default function LockhotDesk() {
           <ul className="space-y-3 text-[15px] text-ink-2">
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
-              <span>Pick a template (Perfect / Growth / Bold)</span>
+              <span>Pick a template (Studio / Campaign / Poster)</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
@@ -845,7 +845,7 @@ export default function LockhotDesk() {
             </div>
           ))}
           
-          {/* Campaign Cell for Growth template */}
+          {/* Campaign Cell for Campaign template */}
           {slides.some(s => s.templateId === "caption_top") && (() => {
             const campaignSlide = slides.find(s => s.kind === "campaign");
             if (!campaignSlide) return null;
