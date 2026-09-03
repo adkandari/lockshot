@@ -202,65 +202,58 @@ export default function SlideCard({
               style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(30%, 30%)' }}
             />
             
-            {/* Type at the TOP - container-relative sizing */}
-            {hasOverlay && (
-              <div className="absolute left-0 right-0 z-20" style={{ top: '3.5cqh', paddingLeft: '6cqw', paddingRight: '6cqw' }}>
-                {overlay.headline && (
-                  <h2 
-                    className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ 
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
-                      color: growthNormalizedColors.text,
-                      fontSize: '8.3cqw',
-                      lineHeight: '1.18',
-                      marginBottom: '0.7cqh'
-                    }}
-                  >
-                    {overlay.headline}
-                  </h2>
-                )}
-                {overlay.subhead && (
-                  <p 
-                    className={`leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ 
-                      fontFamily: 'var(--font-source-serif)', 
-                      color: growthNormalizedColors.text, 
-                      opacity: 0.85,
-                      fontSize: '4.4cqw',
-                      lineHeight: '1.24'
-                    }}
-                  >
-                    {overlay.subhead}
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {/* Thin-bezel phone frame - container-relative positioning */}
-            {imageUrl && (
-              <div className="absolute left-0 right-0 flex justify-center" style={{ top: hasOverlay ? '17.4cqh' : '0', bottom: 0 }}>
-                <div className="relative bg-gray-900 shadow-xl overflow-hidden" style={{ width: '70cqw', aspectRatio: '9/19.5', borderRadius: '5cqw', border: '0.15cqw solid #1a1a1a' }}>
-                  <img
-                    src={imageUrl}
-                    alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-contain bg-black"
-                    crossOrigin="anonymous"
-                  />
+            {/* Flex column layout: type band + phone area */}
+            <div className="absolute inset-0 flex flex-col">
+              {/* Type band at top - flex-shrink-0 with container-relative sizing */}
+              {hasOverlay && (
+                <div className="flex-shrink-0 z-20" style={{ padding: '2.8cqh 2.8cqw' }}>
+                  {overlay.headline && (
+                    <h2 
+                      className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
+                      style={{ 
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                        color: growthNormalizedColors.text,
+                        fontSize: '8cqw',
+                        marginBottom: '0.7cqh'
+                      }}
+                    >
+                      {overlay.headline}
+                    </h2>
+                  )}
+                  {overlay.subhead && (
+                    <p 
+                      className={`leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
+                      style={{ 
+                        fontFamily: 'var(--font-source-serif)', 
+                        color: growthNormalizedColors.text, 
+                        opacity: 0.85,
+                        fontSize: '4cqw'
+                      }}
+                    >
+                      {overlay.subhead}
+                    </p>
+                  )}
                 </div>
+              )}
+              
+              {/* Phone area - flex-1 with items-center, no stretch */}
+              <div className="flex-1 min-h-0 flex items-center justify-center" style={{ padding: '1.4cqh 0' }}>
+                {imageUrl ? (
+                  <div className="relative w-[70%] max-h-full bg-gray-900 rounded-[2rem] shadow-xl flex items-center justify-center" style={{ padding: '0.2cqh', border: '2px solid #1a1a1a' }}>
+                    <img
+                      src={imageUrl}
+                      alt={`Slide ${slide.id}`}
+                      className="w-full h-auto max-h-full object-contain rounded-[1.8rem] bg-black"
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[70%] aspect-[9/19.5] bg-gray-200 rounded-[2rem] flex items-center justify-center text-gray-400" style={{ border: '2px solid #ccc' }}>
+                    <span className="text-xs">No screenshot</span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            {/* Fallback if no image */}
-            {!imageUrl && (
-              <div 
-                className="absolute left-0 right-0 flex justify-center text-gray-400"
-                style={{ top: hasOverlay ? '17.4cqh' : '0', bottom: 0 }}
-              >
-                <div className="bg-gray-200 flex items-center justify-center" style={{ width: '70cqw', aspectRatio: '9/19.5', borderRadius: '5cqw', border: '0.15cqw solid #ccc' }}>
-                  <span style={{ fontSize: '2.5cqw' }}>No screenshot</span>
-                </div>
-              </div>
-            )}
+            </div>
           </>
         );
 
@@ -346,69 +339,58 @@ export default function SlideCard({
               style={{ backgroundColor: normalizedColors.accent, transform: 'translate(-25%, 25%)' }}
             />
             
-            {/* Headline at top - container-relative sizing */}
-            {hasOverlay && (
-              <div className="absolute left-0 right-0 z-20" style={{ top: '2.1cqh', paddingLeft: '7.6cqw', paddingRight: '7.6cqw' }}>
-                {overlay.headline && (
-                  <h2 
-                    className={`font-black leading-tight tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ 
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
-                      color: normalizedColors.text,
-                      fontSize: '9.1cqw',
-                      lineHeight: '1.17',
-                      marginBottom: '0.7cqh'
-                    }}
-                  >
-                    {overlay.headline}
-                  </h2>
-                )}
-                {overlay.subhead && (
-                  <p 
-                    className={`leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ 
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
-                      color: normalizedColors.text, 
-                      opacity: 0.8,
-                      fontSize: '4.24cqw',
-                      lineHeight: '1.25'
-                    }}
-                  >
-                    {overlay.subhead}
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {/* Phone frame with screenshot - container-relative positioning */}
-            {imageUrl && (
-              <div className="absolute left-0 right-0 flex justify-center" style={{ top: hasOverlay ? '12.2cqh' : '0', bottom: '1.4cqh' }}>
-                {/* Realistic iPhone bezel - scaled to 74% width */}
-                <div className="relative bg-black shadow-2xl" style={{ width: '74cqw', aspectRatio: '9/19.5', borderRadius: '6cqw', padding: '0.3cqw' }}>
-                  {/* Inner screen area with smaller radius */}
-                  <div className="relative w-full h-full bg-black overflow-hidden" style={{ borderRadius: '5.5cqw' }}>
+            {/* Flex column layout: type band + phone area */}
+            <div className="absolute inset-0 flex flex-col">
+              {/* Type band - flex-shrink-0 with container-relative sizing */}
+              {hasOverlay && (
+                <div className="flex-shrink-0 z-20" style={{ padding: '2.1cqh 3.5cqw' }}>
+                  {overlay.headline && (
+                    <h2 
+                      className={`font-black leading-tight tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
+                      style={{ 
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                        color: normalizedColors.text,
+                        fontSize: '9cqw',
+                        marginBottom: '0.7cqh'
+                      }}
+                    >
+                      {overlay.headline}
+                    </h2>
+                  )}
+                  {overlay.subhead && (
+                    <p 
+                      className={`leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
+                      style={{ 
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                        color: normalizedColors.text, 
+                        opacity: 0.8,
+                        fontSize: '4cqw'
+                      }}
+                    >
+                      {overlay.subhead}
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              {/* Phone area - flex-1 with items-center, no stretch */}
+              <div className="flex-1 min-h-0 flex items-center justify-center" style={{ padding: '1.4cqh 0' }}>
+                {imageUrl ? (
+                  <div className="relative w-[74%] max-h-full bg-black rounded-[2.5rem] shadow-2xl flex items-center justify-center" style={{ padding: '0.3cqh' }}>
                     <img
                       src={imageUrl}
                       alt={`Slide ${slide.id}`}
-                      className="w-full h-full object-contain"
+                      className="w-full h-auto max-h-full object-contain rounded-[2.2rem]"
                       crossOrigin="anonymous"
                     />
                   </div>
-                </div>
+                ) : (
+                  <div className="w-[74%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center text-gray-400">
+                    <span className="text-sm">No screenshot</span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            {/* Fallback if no image */}
-            {!imageUrl && (
-              <div 
-                className="absolute left-0 right-0 flex justify-center text-gray-400"
-                style={{ top: hasOverlay ? '12.2cqh' : '0', bottom: '1.4cqh' }}
-              >
-                <div className="bg-gray-200 flex items-center justify-center" style={{ width: '74cqw', aspectRatio: '9/19.5', borderRadius: '6cqw' }}>
-                  <span style={{ fontSize: '3cqw' }}>No screenshot</span>
-                </div>
-              </div>
-            )}
+            </div>
           </>
         );
     }

@@ -276,10 +276,16 @@ async function renderTemplate(
         }
       }
       
-      // 4. Draw thin-bezel phone frame centered in lower portion
+      // 4. Draw phone with screenshot - thin bezel, image determines height
       if (img) {
-        const frameWidth = width * 0.70;
-        const frameHeight = frameWidth * (19.5 / 9);
+        const maxFrameWidth = width * 0.70;
+        const imgAspect = img.width / img.height;
+        
+        // Calculate frame dimensions based on image aspect ratio
+        let frameWidth = maxFrameWidth;
+        let frameHeight = frameWidth / imgAspect;
+        
+        // Position frame
         const frameX = (width - frameWidth) / 2;
         const frameY = hasOverlay ? 500 : (height - frameHeight) / 2;
         const frameRadius = 64;
@@ -301,29 +307,9 @@ async function renderTemplate(
         ctx.beginPath();
         roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth / 2);
         ctx.clip();
-        ctx.fillStyle = "#000000";
-        ctx.fill();
         
-        // Object-contain with letterbox
-        const imgAspect = img.width / img.height;
-        const frameAspect = frameWidth / frameHeight;
-        
-        let drawWidth, drawHeight, drawX, drawY;
-        if (imgAspect > frameAspect) {
-          // Image is wider than frame
-          drawWidth = frameWidth;
-          drawHeight = frameWidth / imgAspect;
-          drawX = frameX;
-          drawY = frameY + (frameHeight - drawHeight) / 2;
-        } else {
-          // Image is taller than frame
-          drawHeight = frameHeight;
-          drawWidth = frameHeight * imgAspect;
-          drawX = frameX + (frameWidth - drawWidth) / 2;
-          drawY = frameY;
-        }
-        
-        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        // Draw image to fill frame exactly
+        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
         ctx.restore();
       }
       break;
@@ -479,16 +465,22 @@ async function renderTemplate(
         }
       }
       
-      // 4. Draw phone frame with screenshot - 74% width, tighter positioning, contain
+      // 4. Draw phone with screenshot - thin bezel, image determines height
       if (img) {
-        const frameWidth = width * 0.74;
-        const frameHeight = frameWidth * (19.5 / 9);
+        const maxFrameWidth = width * 0.74;
+        const imgAspect = img.width / img.height;
+        
+        // Calculate frame dimensions based on image aspect ratio
+        let frameWidth = maxFrameWidth;
+        let frameHeight = frameWidth / imgAspect;
+        
+        // Position frame
         const frameX = (width - frameWidth) / 2;
         const frameY = hasOverlay ? 350 : (height - frameHeight) / 2;
         const frameRadius = 80;
         const bezelWidth = 4;
         
-        // Outer bezel (realistic iPhone bezel)
+        // Outer bezel (thin realistic iPhone bezel)
         ctx.save();
         ctx.fillStyle = "#000000";
         ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
@@ -504,29 +496,9 @@ async function renderTemplate(
         ctx.beginPath();
         roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius - bezelWidth);
         ctx.clip();
-        ctx.fillStyle = "#000000";
-        ctx.fill();
         
-        // Object-contain with letterbox
-        const imgAspect = img.width / img.height;
-        const frameAspect = frameWidth / frameHeight;
-        
-        let drawWidth, drawHeight, drawX, drawY;
-        if (imgAspect > frameAspect) {
-          // Image is wider than frame
-          drawWidth = frameWidth;
-          drawHeight = frameWidth / imgAspect;
-          drawX = frameX;
-          drawY = frameY + (frameHeight - drawHeight) / 2;
-        } else {
-          // Image is taller than frame
-          drawHeight = frameHeight;
-          drawWidth = frameHeight * imgAspect;
-          drawX = frameX + (frameWidth - drawWidth) / 2;
-          drawY = frameY;
-        }
-        
-        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        // Draw image to fill frame exactly
+        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
         ctx.restore();
       }
       break;
