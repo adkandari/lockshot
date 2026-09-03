@@ -210,7 +210,7 @@ export default function SlideCard({
             <div className="absolute inset-0 flex flex-col">
               {/* Type band at top - flex-shrink-0 with container-relative sizing */}
               {hasOverlay && (
-                <div className="flex-shrink-0 z-20" style={{ padding: '2.8cqh 2.8cqw' }}>
+                <div className="flex-shrink-0 z-20" style={{ padding: '2.8cqh 8cqw' }}>
                   {overlay.headline && (
                     <h2 
                       className={`font-black leading-tight tracking-tight uppercase ${isOverflowing ? 'opacity-60' : ''}`} 

@@ -18,8 +18,8 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
   // Match the exact rendering parameters from export.ts for each template
   if (templateId === 'caption_top') {
     // Growth template: Roboto Condensed 110px uppercase + Courier Prime 58px
-    const textPadding = 80;
-    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1160px
+    const textPadding = 120;
+    const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1080px
     const textStartY = 100;
     
     let textBottom = textStartY;

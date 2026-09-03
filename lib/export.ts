@@ -279,7 +279,7 @@ async function renderTemplate(
       // 3. Draw type at the TOP
       let growthTextBottom = 100;
       if (hasOverlay && overlay) {
-        const textPadding = 80;
+        const textPadding = 120;
         let textY = 100;
         
         if (overlay.headline) {
