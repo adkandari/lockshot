@@ -312,6 +312,7 @@ export async function registerWebMCPTools(
         const newOverlay = {
           headline: headline !== undefined ? headline : slide.overlays[locale]?.headline || '',
           subhead: subhead !== undefined ? subhead : slide.overlays[locale]?.subhead || '',
+          author: 'model' as const,
         };
 
         const overflow = measureOverflow(newOverlay);

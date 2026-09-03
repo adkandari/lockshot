@@ -9,6 +9,7 @@ export type TemplateId =
 export interface SlideOverlay {
   headline: string;
   subhead: string;
+  author?: 'model' | 'user';
 }
 
 export interface SlideData {

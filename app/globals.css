@@ -3,18 +3,24 @@
 @tailwind utilities;
 
 :root {
+  /* Paper/Ink/Azure Design Tokens */
+  --color-paper: #EFEDEA;
+  --color-surface: #FFFFFF;
+  --color-tray: #E3E0DB;
+  --color-ink: #191A1C;
+  --color-ink-2: #6B6C70;
+  --color-ink-3: #9B9C9F;
+  --color-line: rgba(25, 26, 28, 0.10);
+  --color-line-soft: rgba(25, 26, 28, 0.06);
+  --color-model: #0F7FD8;
+  --color-model-soft: rgba(15, 127, 216, 0.10);
+  --color-live: #1B9E5F;
+
+  /* Legacy vars for Growth slide artwork */
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
   --font-source-serif: 'Source Serif 4', Georgia, serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
 }
 
 body {
