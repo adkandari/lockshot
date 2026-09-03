@@ -50,9 +50,9 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
       // Use slide override colors or extract from image
       if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
         extractedColors = {
-          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#44403c' : '#6d28d9'),
+          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#4a3728' : '#6d28d9'),
           light: slide.colors.background || (slide.templateId === 'caption_top' ? '#f5f2ed' : '#f3e8ff'),
-          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#a8a29e' : '#c4b5fd'),
+          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#8a9a7b' : '#c4b5fd'),
         };
       } else {
         extractedColors = await extractDominantColor(screenshotImg);
@@ -105,7 +105,7 @@ async function renderTemplate(
 
   // Special case: Campaign slide for Growth template
   if (slideKind === "campaign") {
-    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
     
     // 1. Fill with cream background
     ctx.fillStyle = colors.light;
@@ -213,7 +213,7 @@ async function renderTemplate(
 
   switch (templateId) {
     case "caption_top": // Growth: Cream campaign energy with top type
-      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
       
       // 1. Fill with warm cream background
       ctx.fillStyle = growthColors.light;
@@ -257,7 +257,7 @@ async function renderTemplate(
         
         if (overlay.headline) {
           ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = growthColors.text;
+          ctx.fillStyle = growthColors.dark;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
           wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);

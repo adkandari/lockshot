@@ -80,7 +80,7 @@ export default function SlideCard({
   const renderTemplate = () => {
     // Special case: Campaign slide for Growth template
     if (slide.kind === "campaign") {
-      const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+      const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
       const accentColor = colors.dark;
       const textColor = colors.text;
       
@@ -179,9 +179,9 @@ export default function SlideCard({
       case "caption_top": // Growth: Cream campaign energy with top type
         // Normalize colors from either slide overrides or auto-sampled
         const growthNormalizedColors = {
-          text: slide.colors?.text || extractedColors?.text || 'rgb(68, 64, 60)',
+          text: slide.colors?.text || extractedColors?.text || 'rgb(74, 55, 40)',
           background: slide.colors?.background || extractedColors?.light || 'rgb(245, 242, 237)',
-          accent: slide.colors?.accent || extractedColors?.dark || 'rgb(168, 162, 158)',
+          accent: slide.colors?.accent || extractedColors?.dark || 'rgb(138, 154, 123)',
         };
         
         return (
@@ -212,7 +212,7 @@ export default function SlideCard({
                       className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
                       style={{ 
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
-                        color: growthNormalizedColors.text,
+                        color: growthNormalizedColors.accent,
                         fontSize: '8cqw',
                         marginBottom: '0.7cqh'
                       }}
@@ -509,7 +509,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Text:</span>
                 <input
                   type="color"
-                  value={slide.colors?.text || (extractedColors?.text || '#44403c')}
+                  value={slide.colors?.text || (extractedColors?.text || '#4a3728')}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, text: e.target.value });
                   }}
@@ -531,7 +531,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Accent:</span>
                 <input
                   type="color"
-                  value={slide.colors?.accent || (extractedColors?.dark || '#a8a29e')}
+                  value={slide.colors?.accent || (extractedColors?.dark || '#8a9a7b')}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
                   }}
