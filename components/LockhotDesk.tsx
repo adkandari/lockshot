@@ -214,7 +214,7 @@ export default function LockhotDesk() {
             id: 0,
             templateId: "caption_top",
             backgroundImage: '',
-            overlays: { en: { headline: 'focus plan thrive', subhead: 'Less distraction. More direction.' } },
+            overlays: { en: { headline: '', subhead: '' } },
             locked: false,
             comments: [],
             overflow: { en: false },
@@ -440,58 +440,64 @@ export default function LockhotDesk() {
   };
 
   const handleGenerateCampaignPhoto = async () => {
-    // Seed campaign overlay if empty
     const campaignSlide = slides.find(s => s.kind === "campaign");
-    let headlineText = 'focus plan thrive';
-    let subheadText = 'Less distraction. More direction.';
+    const campaignOverlay = campaignSlide?.overlays[currentLocale];
     
-    if (campaignSlide) {
-      const overlay = campaignSlide.overlays[currentLocale];
-      if (!overlay || (!overlay.headline && !overlay.subhead)) {
-        // Set default overlay for current locale
-        setSlides(prev => prev.map(s => {
-          if (s.kind === "campaign") {
-            return {
-              ...s,
-              overlays: {
-                ...s.overlays,
-                [currentLocale]: {
-                  headline: currentLocale === 'en' ? 'focus plan thrive' : 'focus plan thrive',
-                  subhead: currentLocale === 'en' ? 'Less distraction. More direction.' : 'Less distraction. More direction.',
-                }
-              }
-            };
-          }
-          return s;
-        }));
-        
-        if (currentProject) {
-          const updatedSlides = slides.map(s => {
-            if (s.kind === "campaign") {
-              return {
-                ...s,
-                overlays: {
-                  ...s.overlays,
-                  [currentLocale]: {
-                    headline: currentLocale === 'en' ? 'focus plan thrive' : 'focus plan thrive',
-                    subhead: currentLocale === 'en' ? 'Less distraction. More direction.' : 'Less distraction. More direction.',
-                  }
-                }
-              };
-            }
-            return s;
-          });
-          const updatedProject = { ...currentProject, slides: updatedSlides };
-          setCurrentProject(updatedProject);
-        }
-      } else {
-        // Use existing overlay text
-        headlineText = overlay.headline || headlineText;
-        subheadText = overlay.subhead || subheadText;
-      }
+    // Check if campaign overlay is empty or still has the old sample text
+    const isSampleText = 
+      campaignOverlay?.headline === 'focus plan thrive' || 
+      campaignOverlay?.subhead === 'Less distraction. More direction.';
+    const isEmpty = !campaignOverlay || (!campaignOverlay.headline && !campaignOverlay.subhead);
+    const needsInference = isEmpty || isSampleText;
+    
+    let prompt: string;
+    
+    if (needsInference) {
+      // Campaign overlay is empty or stale — tell ChatGPT to infer from product slides
+      prompt = `Use the site tools. Follow these steps:
+
+1. Call get_page_state to read the product slide overlays (slides 1-5) and the project name.
+
+2. Based on the product slide headlines/subheads and app name, write a short campaign headline and tagline for slide 0 (the campaign slide):
+   - Campaign headline: ~3 lowercase words that capture the app's core value (e.g., "track habits daily", "plan your week", "focus without distractions")
+   - Campaign subhead: A short tagline inferred from the product copy (e.g., "Stay on track." or "Build better habits.")
+   - DO NOT use "focus plan thrive" or "Less distraction. More direction." or any unrelated wellness filler
+   - Infer from the actual app's purpose shown in the product slide overlays
+
+3. Call set_overlay with slide=0, headline="...", subhead="..." to save the campaign copy you wrote.
+
+4. Then generate a vertical (9:16 aspect ratio) designed campaign graphic WITH typography included. This is a finished marketing image, not a text-free photo.
+
+LAYOUT: Split vertical layout — left ~40% is a cream/beige negative space column containing the stacked headline words and subhead. Right ~60% shows a lifestyle portrait/subject. The text must NOT overlap the person/photo — keep type confined to the left column.
+
+HEADLINE STYLING: Stack each word on its own line in lowercase, using a bold condensed sans-serif. The last word should be in sage green with a terracotta hand-drawn squiggle underline. Earlier words in dark brown/charcoal.
+
+SUBHEAD STYLING: Place the subhead below the headline stack in a smaller serif or monospace font, dark brown/charcoal.
+
+PALETTE: Warm cream/beige background, sage green accent, terracotta accent, dark brown text. Organic, modern, minimalist.
+
+NO devices, NO phone UI, NO extra random words beyond the campaign copy you wrote. The user will drop this finished graphic on the campaign slot. Because the type is baked into the image, Lockshot will NOT composite additional text on top.`;
+    } else {
+      // Campaign overlay already has real copy — use it directly
+      const headlineText = campaignOverlay.headline;
+      const subheadText = campaignOverlay.subhead;
+      
+      prompt = `Use the site tools. Generate a vertical (9:16 aspect ratio) designed campaign graphic WITH typography included. This is a finished marketing image, not a text-free photo.
+
+COPY TO RENDER IN THE IMAGE:
+Headline: "${headlineText}"
+Subhead: "${subheadText}"
+
+LAYOUT: Split vertical layout — left ~40% is a cream/beige negative space column containing the stacked headline words and subhead. Right ~60% shows a lifestyle portrait/subject. The text must NOT overlap the person/photo — keep type confined to the left column.
+
+HEADLINE STYLING: Stack each word on its own line in lowercase, using a bold condensed sans-serif. The last word should be in sage green with a terracotta hand-drawn squiggle underline. Earlier words in dark brown/charcoal.
+
+SUBHEAD STYLING: Place the subhead below the headline stack in a smaller serif or monospace font, dark brown/charcoal.
+
+PALETTE: Warm cream/beige background, sage green accent, terracotta accent, dark brown text. Organic, modern, minimalist.
+
+NO devices, NO phone UI, NO extra random words beyond the specified copy. The user will drop this finished graphic on the campaign slot. Because the type is baked into the image, Lockshot will NOT composite additional text on top.`;
     }
-    
-    const prompt = `Use the site tools. First, check get_page_state to see the campaign slide overlay. If the campaign slide (id=0) has empty overlay text, use set_overlay to set: headline='focus plan thrive' (three lowercase words), subhead='Less distraction. More direction.' (short tagline) for the current locale.\n\nThen generate a vertical (9:16 aspect ratio) designed campaign graphic WITH typography included. This is a finished marketing image, not a text-free photo.\n\nCOPY TO RENDER IN THE IMAGE:\nHeadline: "${headlineText}"\nSubhead: "${subheadText}"\n\nLAYOUT: Split vertical layout — left ~40% is a cream/beige negative space column containing the stacked headline words and subhead. Right ~60% shows a lifestyle portrait/subject. The text must NOT overlap the person/photo — keep type confined to the left column.\n\nHEADLINE STYLING: If the headline is a short phrase (like "focus plan thrive"), stack each word on its own line in lowercase, using a bold condensed sans-serif. The last word should be in sage green with a terracotta hand-drawn squiggle underline. Earlier words in dark brown/charcoal.\n\nSUBHEAD STYLING: Place the subhead below the headline stack in a smaller serif or monospace font, dark brown/charcoal.\n\nPALETTE: Warm cream/beige background, sage green accent, terracotta accent, dark brown text. Organic, modern, minimalist.\n\nNO devices, NO phone UI, NO extra random words beyond the specified copy. The user will drop this finished graphic on the campaign slot. Because the type is baked into the image, Lockshot will NOT composite additional text on top.`;
     
     // Try sendFollowUpMessage
     if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
