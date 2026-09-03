@@ -156,16 +156,15 @@ export default function LockhotDesk() {
     setLocales(updatedLocales);
 
     const updatedSlides = slides.map(slide => {
-      const enOverlay = slide.overlays['en'] || { headline: '', subhead: '' };
       return {
         ...slide,
         overlays: {
           ...slide.overlays,
-          [locale]: { ...enOverlay },
+          [locale]: { headline: '', subhead: '' },
         },
         overflow: {
           ...slide.overflow,
-          [locale]: measureOverflow(enOverlay),
+          [locale]: false,
         },
       };
     });
@@ -192,7 +191,18 @@ export default function LockhotDesk() {
       let updated = prev.map(s => {
         if (slideId && s.id !== slideId) return s;
         if (!slideId && s.locked) return s;
-        return { ...s, templateId: template };
+        
+        // Update templateId and remeasure overflow for all locales
+        const updatedSlide = { ...s, templateId: template };
+        const newOverflow: Record<string, boolean> = {};
+        
+        Object.keys(s.overlays).forEach(locale => {
+          const overlay = s.overlays[locale];
+          newOverflow[locale] = measureOverflow(overlay, template);
+        });
+        
+        updatedSlide.overflow = newOverflow;
+        return updatedSlide;
       });
       
       // Handle campaign slide for Growth template
@@ -625,9 +635,12 @@ export default function LockhotDesk() {
             </div>
           )}
           
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-sm font-medium text-gray-700">Template:</label>
-            {TEMPLATES.map(template => {
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-[11px] text-gray-500">Template</label>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              {TEMPLATES.map(template => {
               // Determine active template (most common among slides)
               const templateCounts = slides.reduce((acc, slide) => {
                 acc[slide.templateId] = (acc[slide.templateId] || 0) + 1;
@@ -652,14 +665,16 @@ export default function LockhotDesk() {
                 </button>
               );
             })}
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">
-                Locale:
-              </label>
-              <select
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-[11px] text-gray-500">Locale</label>
+            </div>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <select
                 value={currentLocale}
                 onChange={(e) => setCurrentLocale(e.target.value as Locale)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -680,23 +695,10 @@ export default function LockhotDesk() {
                     </option>
                   );
                 })}
-              </select>
-              {currentLocale !== 'en' && slides.length > 0 && (() => {
-                const enOverlay = slides[0]?.overlays['en'];
-                const currentOverlay = slides[0]?.overlays[currentLocale];
-                const isDraft = enOverlay && currentOverlay && 
-                  enOverlay.headline === currentOverlay.headline &&
-                  enOverlay.subhead === currentOverlay.subhead;
-                
-                return isDraft ? (
-                  <span className="text-xs text-orange-600 italic">
-                    English draft — ask ChatGPT to rewrite
-                  </span>
-                ) : null;
-              })()}
-            </div>
+                </select>
+              </div>
 
-            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
               {showAddLocale ? (
                 <>
                   <select
@@ -740,7 +742,10 @@ export default function LockhotDesk() {
                 💬 ChatGPT writes this locale via tools
               </span>
             </div>
+          </div>
+          </div>
 
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={handleWriteHeadlines}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"

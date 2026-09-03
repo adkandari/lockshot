@@ -168,11 +168,13 @@ export async function registerWebMCPTools(
           success: true,
           locale,
           availableLocales: getLocalesRef(),
-          message: `Added locale ${locale}. This locale now shows English draft overlays. You MUST call set_overlay for each slide to translate the text. Call set_overlay(slide=1, headline="...", subhead="...") through set_overlay(slide=5, headline="...", subhead="...") with translated ${locale} text.`,
-          slidesToTranslate: slides.map((s, i) => ({
+          message: `Added locale ${locale}. The new locale's overlays are EMPTY. You MUST call set_overlay for each slide to write translated ${locale} text. English text below is SOURCE TEXT for translation ONLY.`,
+          slidesToTranslate: slides.filter(s => s.kind !== 'campaign').map((s, i) => ({
             slideId: s.id,
             enHeadline: enOverlays[i]?.headline || '',
             enSubhead: enOverlays[i]?.subhead || '',
+            currentOverlay: s.overlays[locale],
+            note: `Translate these English texts to ${locale} and call set_overlay(slide=${s.id}, headline="...", subhead="...")`,
           })),
         };
       },
@@ -314,7 +316,7 @@ export async function registerWebMCPTools(
           subhead: subhead !== undefined ? subhead : slide.overlays[locale]?.subhead || '',
         };
 
-        const overflow = measureOverflow(newOverlay);
+        const overflow = measureOverflow(newOverlay, slide.templateId);
 
         setSlides(prev => prev.map(s => {
           if (s.id === slideId) {
