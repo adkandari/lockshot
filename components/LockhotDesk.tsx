@@ -572,7 +572,7 @@ export default function LockhotDesk() {
           <ul className="space-y-3 text-[15px] text-ink-2">
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
-              <span>Pick a template (Perfect / Growth / Astra)</span>
+              <span>Pick a template (Perfect / Growth / Bold)</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
