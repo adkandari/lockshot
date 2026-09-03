@@ -314,7 +314,7 @@ export async function registerWebMCPTools(
           subhead: subhead !== undefined ? subhead : slide.overlays[locale]?.subhead || '',
         };
 
-        const overflow = measureOverflow(newOverlay);
+        const overflow = measureOverflow(newOverlay, slide.templateId);
 
         setSlides(prev => prev.map(s => {
           if (s.id === slideId) {

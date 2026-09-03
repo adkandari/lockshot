@@ -33,7 +33,7 @@ const COMMON_LOCALES = [
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
   { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
   { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
-  { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
+  { id: "framed_on_gradient", name: "Bold", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -165,7 +165,7 @@ export default function LockhotDesk() {
         },
         overflow: {
           ...slide.overflow,
-          [locale]: measureOverflow(enOverlay),
+          [locale]: measureOverflow(enOverlay, slide.templateId),
         },
       };
     });
@@ -659,41 +659,47 @@ export default function LockhotDesk() {
               <label className="text-sm font-medium text-gray-700">
                 Locale:
               </label>
-              <select
-                value={currentLocale}
-                onChange={(e) => setCurrentLocale(e.target.value as Locale)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <div className="flex items-center gap-2 flex-wrap">
                 {locales.map((locale) => {
                   const localeInfo = COMMON_LOCALES.find(l => l.code === locale);
-                  const enOverlay = slides[0]?.overlays['en'];
-                  const currentOverlay = slides[0]?.overlays[locale];
-                  const isDraft = locale !== 'en' && 
-                    enOverlay && currentOverlay && 
-                    enOverlay.headline === currentOverlay.headline &&
-                    enOverlay.subhead === currentOverlay.subhead;
+                  const isActive = currentLocale === locale;
                   
                   return (
-                    <option key={locale} value={locale}>
-                      {localeInfo ? `${localeInfo.flag} ${localeInfo.name}` : locale}
-                      {isDraft ? ' (draft)' : ''}
-                    </option>
+                    <button
+                      key={locale}
+                      onClick={() => setCurrentLocale(locale)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors flex items-center gap-1.5 ${
+                        isActive 
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' 
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span>{localeInfo?.flag || '🌐'}</span>
+                      <span>{localeInfo?.code.toUpperCase() || locale}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (locales.length > 1) {
+                            const updatedLocales = locales.filter(l => l !== locale);
+                            setLocales(updatedLocales);
+                            if (currentLocale === locale) {
+                              setCurrentLocale(updatedLocales[0]);
+                            }
+                            if (currentProject) {
+                              const updatedProject = { ...currentProject, locales: updatedLocales };
+                              setCurrentProject(updatedProject);
+                            }
+                          }
+                        }}
+                        className="text-gray-400 hover:text-gray-600 ml-1"
+                        title="Remove locale"
+                      >
+                        ×
+                      </button>
+                    </button>
                   );
                 })}
-              </select>
-              {currentLocale !== 'en' && slides.length > 0 && (() => {
-                const enOverlay = slides[0]?.overlays['en'];
-                const currentOverlay = slides[0]?.overlays[currentLocale];
-                const isDraft = enOverlay && currentOverlay && 
-                  enOverlay.headline === currentOverlay.headline &&
-                  enOverlay.subhead === currentOverlay.subhead;
-                
-                return isDraft ? (
-                  <span className="text-xs text-orange-600 italic">
-                    English draft — ask ChatGPT to rewrite
-                  </span>
-                ) : null;
-              })()}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -707,7 +713,7 @@ export default function LockhotDesk() {
                     <option value="">Select locale...</option>
                     {COMMON_LOCALES.filter(l => !locales.includes(l.code)).map(locale => (
                       <option key={locale.code} value={locale.code}>
-                        {locale.flag} {locale.name}
+                        {locale.flag} {locale.code} — {locale.name}
                       </option>
                     ))}
                   </select>
@@ -743,7 +749,10 @@ export default function LockhotDesk() {
 
             <button
               onClick={handleWriteHeadlines}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+              className="px-4 py-2 text-white rounded-lg transition-colors font-medium"
+              style={{ backgroundColor: '#0F7FD8' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
             >
               ✏️ Write Headlines
             </button>
@@ -751,7 +760,10 @@ export default function LockhotDesk() {
             {slides.some(s => s.kind === "campaign" && !s.imageKey) && (
               <button
                 onClick={handleGenerateCampaignPhoto}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-4 py-2 text-white rounded-lg transition-colors font-medium"
+                style={{ backgroundColor: '#0F7FD8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
                 title="Generate a lifestyle photo for the campaign slide"
               >
                 🖼️ Generate Campaign Photo

@@ -3,7 +3,7 @@ import { SlideOverlay } from './types';
 const EXPORT_WIDTH = 1320;
 const EXPORT_HEIGHT = 2868;
 
-export function measureOverflow(overlay: SlideOverlay): boolean {
+export function measureOverflow(overlay: SlideOverlay, templateId?: string): boolean {
   if (typeof document === 'undefined') return false;
 
   const canvas = document.createElement('canvas');
@@ -19,11 +19,15 @@ export function measureOverflow(overlay: SlideOverlay): boolean {
   ctx.font = `900 ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
   const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, headlineFontSize * 1.15);
 
-  const subheadFontSize = 64;
-  ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-  const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
+  // Bold template (framed_on_gradient) has no subhead
+  let subheadHeight = 0;
+  if (templateId !== 'framed_on_gradient') {
+    const subheadFontSize = 64;
+    ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+    subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
+  }
 
-  const totalHeight = headlineHeight + subheadHeight + 60; // padding between headline/subhead
+  const totalHeight = headlineHeight + subheadHeight + (subheadHeight > 0 ? 60 : 0); // padding only if subhead exists
   const availableHeight = boxHeight;
 
   return totalHeight > availableHeight;
@@ -57,7 +61,7 @@ function measureTextHeight(
 }
 
 export function measureAllOverflows(
-  slides: Array<{ overlays: Record<string, SlideOverlay> }>,
+  slides: Array<{ overlays: Record<string, SlideOverlay>; templateId?: string }>,
   locales: string[]
 ): Record<number, Record<string, boolean>> {
   const overflows: Record<number, Record<string, boolean>> = {};
@@ -67,7 +71,7 @@ export function measureAllOverflows(
     locales.forEach(locale => {
       const overlay = slide.overlays[locale];
       if (overlay) {
-        overflows[index + 1][locale] = measureOverflow(overlay);
+        overflows[index + 1][locale] = measureOverflow(overlay, slide.templateId);
       }
     });
   });

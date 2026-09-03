@@ -258,34 +258,32 @@ export default function SlideCard({
           </>
         );
 
-      case "framed_on_gradient": // Astra: Dark navy + lavender
+      case "framed_on_gradient": // Bold: Dark navy + lavender
         return (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 py-12">
-              {hasOverlay && (
-                <div className="text-center mb-10 z-10 max-w-[85%]">
-                  {overlay.headline && (
-                    <h2 className={`text-4xl font-black text-white leading-tight mb-4 ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.headline}
-                    </h2>
-                  )}
-                  {overlay.subhead && (
-                    <p className={`text-lg text-purple-200 leading-relaxed ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
-                      {overlay.subhead}
-                    </p>
-                  )}
+            <div className="absolute inset-0 flex flex-col items-center px-8 py-12">
+              {hasOverlay && overlay.headline && (
+                <div className="text-center mb-8 z-10 max-w-[85%]">
+                  <h2 className={`text-4xl font-black text-white leading-tight ${isOverflowing ? 'text-red-200' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif' }}>
+                    {overlay.headline}
+                  </h2>
                 </div>
               )}
               {imageUrl && (
-                <div className="relative w-[65%] aspect-[9/19.5] bg-black rounded-[3.5rem] shadow-2xl overflow-hidden">
-                  <div className="absolute inset-0 rounded-[3.5rem] ring-2 ring-purple-400/30 ring-inset"></div>
-                  <img
-                    src={imageUrl}
-                    alt={`Slide ${slide.id}`}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                  />
+                <div className="relative flex-1 flex items-center justify-center w-full">
+                  <div className="relative w-[65%] max-h-full flex items-center justify-center" style={{ aspectRatio: '9 / 19.5' }}>
+                    <div className="absolute inset-0 bg-purple-300/20 rounded-[2.5rem]" style={{ padding: '0.8cqh' }}>
+                      <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden">
+                        <img
+                          src={imageUrl}
+                          alt={`Slide ${slide.id}`}
+                          className="w-full h-full object-contain"
+                          crossOrigin="anonymous"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -570,16 +568,32 @@ export default function SlideCard({
           </div>
         )}
 
-        <div className="mt-3 text-xs text-gray-500">
-          <div className="truncate">
+        <div className="mt-3 space-y-2">
+          <div className="text-xs text-gray-500 mb-2">
             <strong>Template:</strong> {slide.templateId.replace(/_/g, ' ')}
           </div>
-          <div className="truncate">
-            <strong>H:</strong> {overlay.headline || '(empty)'}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Headline:</label>
+            <input
+              type="text"
+              value={overlay.headline || ''}
+              placeholder="Ask the model"
+              readOnly
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700"
+            />
           </div>
-          <div className="truncate">
-            <strong>S:</strong> {overlay.subhead || '(empty)'}
-          </div>
+          {slide.templateId !== 'framed_on_gradient' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Subhead:</label>
+              <input
+                type="text"
+                value={overlay.subhead || ''}
+                placeholder="Ask the model"
+                readOnly
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white text-gray-700"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
