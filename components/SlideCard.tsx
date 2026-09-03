@@ -202,21 +202,33 @@ export default function SlideCard({
               style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(30%, 30%)' }}
             />
             
-            {/* Type at the TOP */}
+            {/* Type at the TOP - container-relative sizing */}
             {hasOverlay && (
-              <div className="absolute top-8 left-0 right-0 px-8 z-20">
+              <div className="absolute left-0 right-0 z-20" style={{ top: '3.5cqh', paddingLeft: '6cqw', paddingRight: '6cqw' }}>
                 {overlay.headline && (
                   <h2 
-                    className={`text-2xl font-black leading-tight mb-2 tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: growthNormalizedColors.text }}
+                    className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ 
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                      color: growthNormalizedColors.text,
+                      fontSize: '8.3cqw',
+                      lineHeight: '1.18',
+                      marginBottom: '0.7cqh'
+                    }}
                   >
                     {overlay.headline}
                   </h2>
                 )}
                 {overlay.subhead && (
                   <p 
-                    className={`text-sm leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: 'var(--font-source-serif)', color: growthNormalizedColors.text, opacity: 0.85 }}
+                    className={`leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ 
+                      fontFamily: 'var(--font-source-serif)', 
+                      color: growthNormalizedColors.text, 
+                      opacity: 0.85,
+                      fontSize: '4.4cqw',
+                      lineHeight: '1.24'
+                    }}
                   >
                     {overlay.subhead}
                   </p>
@@ -224,10 +236,10 @@ export default function SlideCard({
               </div>
             )}
             
-            {/* Thin-bezel phone frame centered in lower portion */}
+            {/* Thin-bezel phone frame - container-relative positioning */}
             {imageUrl && (
-              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '130px' : '0' }}>
-                <div className="relative w-[70%] aspect-[9/19.5] bg-gray-900 rounded-[2rem] shadow-xl overflow-hidden" style={{ border: '2px solid #1a1a1a' }}>
+              <div className="absolute left-0 right-0 flex justify-center" style={{ top: hasOverlay ? '17.4cqh' : '0', bottom: 0 }}>
+                <div className="relative bg-gray-900 shadow-xl overflow-hidden" style={{ width: '70cqw', aspectRatio: '9/19.5', borderRadius: '5cqw', border: '0.15cqw solid #1a1a1a' }}>
                   <img
                     src={imageUrl}
                     alt={`Slide ${slide.id}`}
@@ -241,11 +253,11 @@ export default function SlideCard({
             {/* Fallback if no image */}
             {!imageUrl && (
               <div 
-                className="absolute inset-0 flex items-center justify-center text-gray-400"
-                style={{ paddingTop: hasOverlay ? '130px' : '0' }}
+                className="absolute left-0 right-0 flex justify-center text-gray-400"
+                style={{ top: hasOverlay ? '17.4cqh' : '0', bottom: 0 }}
               >
-                <div className="w-[70%] aspect-[9/19.5] bg-gray-200 rounded-[2rem] flex items-center justify-center" style={{ border: '2px solid #ccc' }}>
-                  <span className="text-xs">No screenshot</span>
+                <div className="bg-gray-200 flex items-center justify-center" style={{ width: '70cqw', aspectRatio: '9/19.5', borderRadius: '5cqw', border: '0.15cqw solid #ccc' }}>
+                  <span style={{ fontSize: '2.5cqw' }}>No screenshot</span>
                 </div>
               </div>
             )}
@@ -334,21 +346,33 @@ export default function SlideCard({
               style={{ backgroundColor: normalizedColors.accent, transform: 'translate(-25%, 25%)' }}
             />
             
-            {/* Headline at top - tighter spacing */}
+            {/* Headline at top - container-relative sizing */}
             {hasOverlay && (
-              <div className="absolute top-6 left-0 right-0 px-10 z-20">
+              <div className="absolute left-0 right-0 z-20" style={{ top: '2.1cqh', paddingLeft: '7.6cqw', paddingRight: '7.6cqw' }}>
                 {overlay.headline && (
                   <h2 
-                    className={`text-3xl font-black leading-tight mb-2 tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text }}
+                    className={`font-black leading-tight tracking-tight ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ 
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                      color: normalizedColors.text,
+                      fontSize: '9.1cqw',
+                      lineHeight: '1.17',
+                      marginBottom: '0.7cqh'
+                    }}
                   >
                     {overlay.headline}
                   </h2>
                 )}
                 {overlay.subhead && (
                   <p 
-                    className={`text-sm leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
-                    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: normalizedColors.text, opacity: 0.8 }}
+                    className={`leading-snug ${isOverflowing ? 'opacity-60' : ''}`} 
+                    style={{ 
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                      color: normalizedColors.text, 
+                      opacity: 0.8,
+                      fontSize: '4.24cqw',
+                      lineHeight: '1.25'
+                    }}
                   >
                     {overlay.subhead}
                   </p>
@@ -356,13 +380,13 @@ export default function SlideCard({
               </div>
             )}
             
-            {/* Phone frame with screenshot - larger, tighter positioning */}
+            {/* Phone frame with screenshot - container-relative positioning */}
             {imageUrl && (
-              <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}>
+              <div className="absolute left-0 right-0 flex justify-center" style={{ top: hasOverlay ? '12.2cqh' : '0', bottom: '1.4cqh' }}>
                 {/* Realistic iPhone bezel - scaled to 74% width */}
-                <div className="relative w-[74%] aspect-[9/19.5] bg-black rounded-[2.5rem] shadow-2xl p-1">
+                <div className="relative bg-black shadow-2xl" style={{ width: '74cqw', aspectRatio: '9/19.5', borderRadius: '6cqw', padding: '0.3cqw' }}>
                   {/* Inner screen area with smaller radius */}
-                  <div className="relative w-full h-full bg-black rounded-[2.2rem] overflow-hidden">
+                  <div className="relative w-full h-full bg-black overflow-hidden" style={{ borderRadius: '5.5cqw' }}>
                     <img
                       src={imageUrl}
                       alt={`Slide ${slide.id}`}
@@ -377,11 +401,11 @@ export default function SlideCard({
             {/* Fallback if no image */}
             {!imageUrl && (
               <div 
-                className="absolute inset-0 flex items-center justify-center text-gray-400"
-                style={{ paddingTop: hasOverlay ? '90px' : '0', paddingBottom: '40px' }}
+                className="absolute left-0 right-0 flex justify-center text-gray-400"
+                style={{ top: hasOverlay ? '12.2cqh' : '0', bottom: '1.4cqh' }}
               >
-                <div className="w-[74%] aspect-[9/19.5] bg-gray-200 rounded-[2.5rem] flex items-center justify-center">
-                  <span className="text-sm">No screenshot</span>
+                <div className="bg-gray-200 flex items-center justify-center" style={{ width: '74cqw', aspectRatio: '9/19.5', borderRadius: '6cqw' }}>
+                  <span style={{ fontSize: '3cqw' }}>No screenshot</span>
                 </div>
               </div>
             )}
@@ -393,7 +417,7 @@ export default function SlideCard({
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative group">
-        <div className="aspect-[1320/2868] relative overflow-hidden bg-gray-100">
+        <div className="aspect-[1320/2868] relative overflow-hidden bg-gray-100 [container-type:size]">
           {renderTemplate()}
 
           {isOverflowing && (
