@@ -34,8 +34,9 @@ export default function SlideCard({
       createImageURL(slide.imageKey).then(url => {
         if (url) {
           setImageUrl(url);
-          // Extract color for Perfect and Growth templates
-          if (slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top') {
+          // Extract color ONLY for Perfect template (full_bleed_caption_bottom)
+          // Growth uses fixed Dysperse palette
+          if (slide.templateId === 'full_bleed_caption_bottom') {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = async () => {
@@ -48,7 +49,7 @@ export default function SlideCard({
       });
     } else if (slide.backgroundImage) {
       setImageUrl(slide.backgroundImage);
-      if (slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top') {
+      if (slide.templateId === 'full_bleed_caption_bottom') {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = async () => {
@@ -80,7 +81,8 @@ export default function SlideCard({
   const renderTemplate = () => {
     // Special case: Campaign slide for Growth template
     if (slide.kind === "campaign") {
-      const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+      // Fixed Dysperse palette for campaign slides
+      const colors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
       const accentColor = colors.dark;
       const textColor = colors.text;
       
@@ -177,11 +179,11 @@ export default function SlideCard({
     
     switch (slide.templateId) {
       case "caption_top": // Growth: Cream campaign energy with top type
-        // Normalize colors from either slide overrides or auto-sampled
+        // Fixed Dysperse palette (user overrides take precedence)
         const growthNormalizedColors = {
-          text: slide.colors?.text || extractedColors?.text || 'rgb(74, 55, 40)',
-          background: slide.colors?.background || extractedColors?.light || 'rgb(245, 242, 237)',
-          accent: slide.colors?.accent || extractedColors?.dark || 'rgb(138, 154, 123)',
+          text: slide.colors?.text || 'rgb(74, 55, 40)',
+          background: slide.colors?.background || 'rgb(245, 242, 237)',
+          accent: slide.colors?.accent || 'rgb(138, 154, 123)',
         };
         
         return (
@@ -509,7 +511,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Text:</span>
                 <input
                   type="color"
-                  value={slide.colors?.text || (extractedColors?.text || '#4a3728')}
+                  value={slide.colors?.text || '#4a3728'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, text: e.target.value });
                   }}
@@ -520,7 +522,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Bg:</span>
                 <input
                   type="color"
-                  value={slide.colors?.background || (extractedColors?.light || '#f5f2ed')}
+                  value={slide.colors?.background || '#f5f2ed'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, background: e.target.value });
                   }}
@@ -531,7 +533,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Accent:</span>
                 <input
                   type="color"
-                  value={slide.colors?.accent || (extractedColors?.dark || '#8a9a7b')}
+                  value={slide.colors?.accent || '#8a9a7b'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
                   }}
@@ -544,7 +546,7 @@ export default function SlideCard({
                     onColorChange(slide.id, {});
                   }}
                   className="text-xs text-blue-600 hover:text-blue-700 underline"
-                  title="Reset to auto-sampled colors"
+                  title="Reset to Dysperse theme colors"
                 >
                   Auto
                 </button>

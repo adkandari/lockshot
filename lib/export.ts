@@ -44,15 +44,16 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    // Extract colors for Perfect and Growth if needed
+    // Extract colors for Perfect template only
+    // Growth uses fixed Dysperse palette
     let extractedColors = null;
-    if ((slide.templateId === 'full_bleed_caption_bottom' || slide.templateId === 'caption_top' || slide.kind === 'campaign') && screenshotImg) {
+    if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
       // Use slide override colors or extract from image
       if (slide.colors && (slide.colors.text || slide.colors.background || slide.colors.accent)) {
         extractedColors = {
-          text: slide.colors.text || (slide.templateId === 'caption_top' ? '#4a3728' : '#6d28d9'),
-          light: slide.colors.background || (slide.templateId === 'caption_top' ? '#f5f2ed' : '#f3e8ff'),
-          dark: slide.colors.accent || (slide.templateId === 'caption_top' ? '#8a9a7b' : '#c4b5fd'),
+          text: slide.colors.text || '#6d28d9',
+          light: slide.colors.background || '#f3e8ff',
+          dark: slide.colors.accent || '#c4b5fd',
         };
       } else {
         extractedColors = await extractDominantColor(screenshotImg);
@@ -64,7 +65,7 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
       await document.fonts.ready;
     }
 
-    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind);
+    await renderTemplate(ctx, slide.templateId, screenshotImg, overlay, hasOverlay, extractedColors, slide.kind, slide.colors);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -98,14 +99,16 @@ async function renderTemplate(
   overlay: { headline: string; subhead: string } | undefined,
   hasOverlay: boolean,
   extractedColors?: { light: string; dark: string; text: string } | null,
-  slideKind?: "campaign" | "product"
+  slideKind?: "campaign" | "product",
+  slideColors?: { text?: string; background?: string; accent?: string }
 ) {
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
 
   // Special case: Campaign slide for Growth template
   if (slideKind === "campaign") {
-    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+    // Fixed Dysperse palette for campaign slides
+    const colors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
     
     // 1. Fill with cream background
     ctx.fillStyle = colors.light;
@@ -213,7 +216,13 @@ async function renderTemplate(
 
   switch (templateId) {
     case "caption_top": // Growth: Cream campaign energy with top type
-      const growthColors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+      // Fixed Dysperse palette (user overrides take precedence)
+      const growthDefaultColors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+      const growthColors = {
+        light: slideColors?.background || growthDefaultColors.light,
+        dark: slideColors?.accent || growthDefaultColors.dark,
+        text: slideColors?.text || growthDefaultColors.text,
+      };
       
       // 1. Fill with warm cream background
       ctx.fillStyle = growthColors.light;
