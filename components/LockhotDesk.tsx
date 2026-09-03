@@ -429,10 +429,16 @@ export default function LockhotDesk() {
     setCurrentLocale('en');
     saveCurrentProjectId(null);
     setShowEmptyState(true);
-    // Reload sample screenshots after a brief moment
-    setTimeout(() => {
-      loadSampleScreenshots();
-    }, 100);
+  };
+
+  const handleAddYours = () => {
+    // Clear current screenshots and show empty state
+    setCurrentProject(null);
+    setSlides([]);
+    setLocales(['en']);
+    setCurrentLocale('en');
+    saveCurrentProjectId(null);
+    setShowEmptyState(true);
   };
 
   const handleReplaceScreenshots = async (files: File[]) => {
@@ -608,19 +614,6 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
             Ship the same app screens<br />in every language.
           </h1>
           
-          {/* Sample screenshots preview */}
-          <div className="mb-8 flex items-center justify-center gap-4">
-            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/assets/sc1.png" alt="Sample 1" className="w-full h-full object-cover" />
-            </div>
-            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/assets/sc2.png" alt="Sample 2" className="w-full h-full object-cover" />
-            </div>
-            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
-              <img src="/assets/sc3.png" alt="Sample 3" className="w-full h-full object-cover" />
-            </div>
-          </div>
-          
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -747,32 +740,53 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
           
           <div className="space-y-2">
             <label className="text-[11px] text-ink-3 px-1">Template</label>
-            <div className="inline-flex bg-surface border border-line rounded-[14px] p-1 gap-1">
-              {TEMPLATES.map(template => {
-              // Determine active template (most common among slides)
-              const templateCounts = slides.reduce((acc, slide) => {
-                acc[slide.templateId] = (acc[slide.templateId] || 0) + 1;
-                return acc;
-              }, {} as Record<TemplateId, number>);
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="inline-flex bg-surface border border-line rounded-[14px] p-1 gap-1">
+                {TEMPLATES.map(template => {
+                // Determine active template (most common among slides)
+                const templateCounts = slides.reduce((acc, slide) => {
+                  acc[slide.templateId] = (acc[slide.templateId] || 0) + 1;
+                  return acc;
+                }, {} as Record<TemplateId, number>);
+                
+                const mostCommonTemplate = Object.entries(templateCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+                const isActive = mostCommonTemplate === template.id;
+                
+                return (
+                  <button
+                    key={template.id}
+                    onClick={() => handleSetTemplate(template.id)}
+                    className={`px-4 py-2 text-sm font-medium rounded-[9px] transition-colors ${
+                      isActive 
+                        ? 'bg-ink text-surface' 
+                        : 'text-ink-2 hover:bg-line-soft'
+                    }`}
+                    title={template.description}
+                  >
+                    {template.name}
+                  </button>
+                );
+              })}
+              </div>
               
-              const mostCommonTemplate = Object.entries(templateCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-              const isActive = mostCommonTemplate === template.id;
-              
-              return (
-                <button
-                  key={template.id}
-                  onClick={() => handleSetTemplate(template.id)}
-                  className={`px-4 py-2 text-sm font-medium rounded-[9px] transition-colors ${
-                    isActive 
-                      ? 'bg-ink text-surface' 
-                      : 'text-ink-2 hover:bg-line-soft'
-                  }`}
-                  title={template.description}
-                >
-                  {template.name}
-                </button>
-              );
-            })}
+              <button
+                onClick={handleAddYours}
+                className="px-6 py-2.5 bg-model text-white rounded-[14px] hover:opacity-90 transition-opacity font-semibold text-base shadow-card"
+              >
+                📸 Add your screenshots
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleReplaceScreenshots(Array.from(e.target.files));
+                  }
+                }}
+                className="hidden"
+              />
             </div>
           </div>
 
@@ -855,25 +869,6 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-model text-white rounded-[14px] hover:opacity-90 transition-opacity font-medium text-sm shadow-card"
-            >
-              📸 Add yours
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                if (e.target.files) {
-                  handleReplaceScreenshots(Array.from(e.target.files));
-                }
-              }}
-              className="hidden"
-            />
-            
             <button
               onClick={handleWriteHeadlines}
               className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
