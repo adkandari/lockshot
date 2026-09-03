@@ -399,7 +399,7 @@ export default function SlideCard({
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative group">
-        <div className="aspect-[1320/2868] [container-type:size] relative overflow-hidden bg-gray-100">
+        <div className="aspect-[1320/2868] relative overflow-hidden bg-gray-100 [container-type:size]">
           {renderTemplate()}
 
           {isOverflowing && (
