@@ -81,10 +81,11 @@ export default function SlideCard({
   const renderTemplate = () => {
     // Special case: Campaign slide for Growth template
     if (slide.kind === "campaign") {
-      // Fixed Dysperse palette for campaign slides
-      const colors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+      // Fixed Growth palette for campaign slides
+      const colors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
       const accentColor = colors.dark;
       const textColor = colors.text;
+      const terracotta = 'rgb(195, 123, 84)';
       
       return (
         <>
@@ -97,11 +98,11 @@ export default function SlideCard({
           {/* Organic blobs */}
           <div 
             className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-35 blur-3xl"
-            style={{ backgroundColor: accentColor, transform: 'translate(25%, -25%)' }}
+            style={{ backgroundColor: terracotta, transform: 'translate(25%, -25%)' }}
           />
           <div 
             className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-30 blur-3xl"
-            style={{ backgroundColor: accentColor, transform: 'translate(-25%, 25%)' }}
+            style={{ backgroundColor: terracotta, transform: 'translate(-25%, 25%)' }}
           />
           
           {/* Stacked headline with last word in accent */}
@@ -116,15 +117,15 @@ export default function SlideCard({
                   <div className="mb-3">
                     {otherWords && (
                       <h2 
-                        className="text-3xl font-black leading-tight lowercase" 
-                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: textColor }}
+                        className="text-3xl font-black leading-tight uppercase tracking-tight" 
+                        style={{ fontFamily: 'var(--font-roboto-condensed), "Arial Narrow", Impact, sans-serif', color: textColor }}
                       >
                         {otherWords}
                       </h2>
                     )}
                     <h2 
                       className="text-3xl font-black leading-tight lowercase relative inline-block" 
-                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: accentColor }}
+                      style={{ fontFamily: 'var(--font-roboto-condensed), "Arial Narrow", Impact, sans-serif', color: terracotta }}
                     >
                       {lastWord}
                       {/* Simple squiggle underline */}
@@ -137,7 +138,7 @@ export default function SlideCard({
                         <path 
                           d="M 0 4 Q 25 0, 50 4 T 100 4" 
                           fill="none" 
-                          stroke={accentColor} 
+                          stroke={terracotta} 
                           strokeWidth="2"
                         />
                       </svg>
@@ -148,7 +149,7 @@ export default function SlideCard({
               {overlay.subhead && (
                 <p 
                   className="text-sm leading-relaxed mt-2" 
-                  style={{ fontFamily: 'var(--font-source-serif)', color: textColor, opacity: 0.75 }}
+                  style={{ fontFamily: 'var(--font-courier-prime), "Courier New", monospace', color: textColor, opacity: 0.75 }}
                 >
                   {overlay.subhead}
                 </p>
@@ -179,12 +180,13 @@ export default function SlideCard({
     
     switch (slide.templateId) {
       case "caption_top": // Growth: Cream campaign energy with top type
-        // Fixed Dysperse palette (user overrides take precedence)
+        // Fixed Growth palette (user overrides take precedence)
         const growthNormalizedColors = {
-          text: slide.colors?.text || 'rgb(74, 55, 40)',
-          background: slide.colors?.background || 'rgb(245, 242, 237)',
-          accent: slide.colors?.accent || 'rgb(138, 154, 123)',
+          text: slide.colors?.text || 'rgb(68, 57, 45)',
+          background: slide.colors?.background || 'rgb(243, 232, 218)',
+          accent: slide.colors?.accent || 'rgb(112, 125, 93)',
         };
+        const terracotta = 'rgb(195, 123, 84)';
         
         return (
           <>
@@ -197,11 +199,11 @@ export default function SlideCard({
             {/* Soft organic blobs in corners */}
             <div 
               className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 blur-3xl"
-              style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(-30%, -30%)' }}
+              style={{ backgroundColor: terracotta, transform: 'translate(-30%, -30%)' }}
             />
             <div 
               className="absolute bottom-0 right-0 w-56 h-56 rounded-full opacity-30 blur-3xl"
-              style={{ backgroundColor: growthNormalizedColors.accent, transform: 'translate(30%, 30%)' }}
+              style={{ backgroundColor: terracotta, transform: 'translate(30%, 30%)' }}
             />
             
             {/* Flex column layout: type band + phone area */}
@@ -211,9 +213,9 @@ export default function SlideCard({
                 <div className="flex-shrink-0 z-20" style={{ padding: '2.8cqh 2.8cqw' }}>
                   {overlay.headline && (
                     <h2 
-                      className={`font-black leading-tight tracking-wide uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
+                      className={`font-black leading-tight tracking-tight uppercase ${isOverflowing ? 'opacity-60' : ''}`} 
                       style={{ 
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', 
+                        fontFamily: 'var(--font-roboto-condensed), "Arial Narrow", Impact, sans-serif', 
                         color: growthNormalizedColors.accent,
                         fontSize: '8cqw',
                         marginBottom: '0.7cqh'
@@ -226,7 +228,7 @@ export default function SlideCard({
                     <p 
                       className={`leading-relaxed ${isOverflowing ? 'opacity-60' : ''}`} 
                       style={{ 
-                        fontFamily: 'var(--font-source-serif)', 
+                        fontFamily: 'var(--font-courier-prime), "Courier New", monospace', 
                         color: growthNormalizedColors.text, 
                         opacity: 0.85,
                         fontSize: '4cqw'
@@ -511,7 +513,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Text:</span>
                 <input
                   type="color"
-                  value={slide.colors?.text || '#4a3728'}
+                  value={slide.colors?.text || '#44392D'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, text: e.target.value });
                   }}
@@ -522,7 +524,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Bg:</span>
                 <input
                   type="color"
-                  value={slide.colors?.background || '#f5f2ed'}
+                  value={slide.colors?.background || '#F3E8DA'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, background: e.target.value });
                   }}
@@ -533,7 +535,7 @@ export default function SlideCard({
                 <span className="text-xs text-gray-600">Accent:</span>
                 <input
                   type="color"
-                  value={slide.colors?.accent || '#8a9a7b'}
+                  value={slide.colors?.accent || '#707D5D'}
                   onChange={(e) => {
                     onColorChange(slide.id, { ...slide.colors, accent: e.target.value });
                   }}
@@ -546,7 +548,7 @@ export default function SlideCard({
                     onColorChange(slide.id, {});
                   }}
                   className="text-xs text-blue-600 hover:text-blue-700 underline"
-                  title="Reset to Dysperse theme colors"
+                  title="Reset to Growth theme colors"
                 >
                   Auto
                 </button>

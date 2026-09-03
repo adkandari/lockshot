@@ -107,8 +107,9 @@ async function renderTemplate(
 
   // Special case: Campaign slide for Growth template
   if (slideKind === "campaign") {
-    // Fixed Dysperse palette for campaign slides
-    const colors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+    // Fixed Growth palette for campaign slides
+    const colors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
+    const terracotta = 'rgb(195, 123, 84)';
     
     // 1. Fill with cream background
     ctx.fillStyle = colors.light;
@@ -117,7 +118,7 @@ async function renderTemplate(
     // 2. Draw organic blobs
     ctx.globalAlpha = 0.35;
     const blobTopRight = ctx.createRadialGradient(width * 0.85, height * 0.15, 0, width * 0.85, height * 0.15, width * 0.3);
-    blobTopRight.addColorStop(0, colors.dark);
+    blobTopRight.addColorStop(0, terracotta);
     blobTopRight.addColorStop(1, 'transparent');
     ctx.fillStyle = blobTopRight;
     ctx.beginPath();
@@ -126,7 +127,7 @@ async function renderTemplate(
     
     ctx.globalAlpha = 0.3;
     const blobBottomLeft = ctx.createRadialGradient(width * 0.15, height * 0.85, 0, width * 0.15, height * 0.85, width * 0.27);
-    blobBottomLeft.addColorStop(0, colors.dark);
+    blobBottomLeft.addColorStop(0, terracotta);
     blobBottomLeft.addColorStop(1, 'transparent');
     ctx.fillStyle = blobBottomLeft;
     ctx.beginPath();
@@ -144,23 +145,23 @@ async function renderTemplate(
       const textX = 100;
       let textY = 120;
       
-      ctx.font = `900 130px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      ctx.font = `700 130px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       
       if (otherWords) {
         ctx.fillStyle = colors.text;
-        wrapText(ctx, otherWords.toLowerCase(), textX, textY, width - 200, 150);
+        wrapText(ctx, otherWords.toUpperCase(), textX, textY, width - 200, 150);
         textY += 150;
       }
       
-      // Last word in accent with squiggle
-      ctx.fillStyle = colors.dark;
+      // Last word in terracotta with squiggle
+      ctx.fillStyle = terracotta;
       ctx.fillText(lastWord.toLowerCase(), textX, textY);
       
       // Draw squiggle underline
       const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
-      ctx.strokeStyle = colors.dark;
+      ctx.strokeStyle = terracotta;
       ctx.lineWidth = 8;
       ctx.globalAlpha = 0.7;
       ctx.beginPath();
@@ -182,7 +183,7 @@ async function renderTemplate(
       
       // Subhead
       if (overlay.subhead) {
-        ctx.font = `56px Georgia, "Source Serif 4", serif`;
+        ctx.font = `700 56px Courier Prime, "Courier New", monospace`;
         ctx.fillStyle = colors.text;
         ctx.globalAlpha = 0.75;
         wrapText(ctx, overlay.subhead, textX, textY, width - 200, 70);
@@ -216,20 +217,20 @@ async function renderTemplate(
 
   switch (templateId) {
     case "caption_top": // Growth: Cream campaign energy with top type
-      // Fixed Dysperse palette (user overrides take precedence)
-      const growthDefaultColors = { light: 'rgb(245, 242, 237)', dark: 'rgb(138, 154, 123)', text: 'rgb(74, 55, 40)' };
+      // Fixed Growth palette (user overrides take precedence)
+      const growthDefaultColors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
       const growthColors = {
         light: slideColors?.background || growthDefaultColors.light,
         dark: slideColors?.accent || growthDefaultColors.dark,
         text: slideColors?.text || growthDefaultColors.text,
       };
+      const growthTerracotta = 'rgb(195, 123, 84)';
       
       // 1. Fill with warm cream background
       ctx.fillStyle = growthColors.light;
       ctx.fillRect(0, 0, width, height);
       
       // 2. Draw soft organic blobs in corners
-      ctx.fillStyle = growthColors.dark;
       ctx.globalAlpha = 0.4;
       
       // Top-left blob
@@ -237,7 +238,7 @@ async function renderTemplate(
       const blob1Y = height * 0.1;
       const blob1R = width * 0.25;
       const gradient1 = ctx.createRadialGradient(blob1X, blob1Y, 0, blob1X, blob1Y, blob1R);
-      gradient1.addColorStop(0, growthColors.dark);
+      gradient1.addColorStop(0, growthTerracotta);
       gradient1.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient1;
       ctx.beginPath();
@@ -250,7 +251,7 @@ async function renderTemplate(
       const blob2Y = height * 0.9;
       const blob2R = width * 0.22;
       const gradient2 = ctx.createRadialGradient(blob2X, blob2Y, 0, blob2X, blob2Y, blob2R);
-      gradient2.addColorStop(0, growthColors.dark);
+      gradient2.addColorStop(0, growthTerracotta);
       gradient2.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient2;
       ctx.beginPath();
@@ -265,7 +266,7 @@ async function renderTemplate(
         let textY = 100;
         
         if (overlay.headline) {
-          ctx.font = `900 110px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+          ctx.font = `700 110px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
           ctx.fillStyle = growthColors.dark;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
@@ -274,8 +275,7 @@ async function renderTemplate(
         }
         
         if (overlay.subhead) {
-          // Try to load serif font for subhead
-          ctx.font = `58px Georgia, "Source Serif 4", serif`;
+          ctx.font = `700 58px Courier Prime, "Courier New", monospace`;
           ctx.fillStyle = growthColors.text;
           ctx.globalAlpha = 0.85;
           ctx.textAlign = "left";
