@@ -183,7 +183,7 @@ async function renderTemplate(
       if (overlay.subhead) {
         ctx.font = `700 56px Courier Prime, "Courier New", monospace`;
         ctx.fillStyle = colors.text;
-        wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
+        textY = wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
       }
     }
     
@@ -277,6 +277,7 @@ async function renderTemplate(
       ctx.globalAlpha = 1.0;
       
       // 3. Draw type at the TOP
+      let growthTextBottom = 100;
       if (hasOverlay && overlay) {
         const textPadding = 80;
         let textY = 100;
@@ -286,8 +287,8 @@ async function renderTemplate(
           ctx.fillStyle = growthColors.dark;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);
-          textY += 150;
+          textY = wrapText(ctx, overlay.headline.toUpperCase(), textPadding, textY, width - textPadding * 2, 130);
+          textY += 20; // Gap between headline and subhead
         }
         
         if (overlay.subhead) {
@@ -296,9 +297,11 @@ async function renderTemplate(
           ctx.globalAlpha = 0.85;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 72);
+          textY = wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 72);
           ctx.globalAlpha = 1.0;
         }
+        
+        growthTextBottom = textY;
       }
       
       // 4. Draw phone with screenshot - thin bezel, image determines height
@@ -310,9 +313,9 @@ async function renderTemplate(
         let frameWidth = maxFrameWidth;
         let frameHeight = frameWidth / imgAspect;
         
-        // Position frame
+        // Position frame below text with spacing
         const frameX = (width - frameWidth) / 2;
-        const frameY = hasOverlay ? 500 : (height - frameHeight) / 2;
+        const frameY = hasOverlay ? Math.max(500, growthTextBottom + 40) : (height - frameHeight) / 2;
         const frameRadius = 64;
         const bezelWidth = 8;
         
@@ -348,7 +351,7 @@ async function renderTemplate(
       ctx.fillStyle = gradientBg;
       ctx.fillRect(0, 0, width, height);
 
-      let boldTextY = 260;
+      let boldTextBottom = 260;
       
       // Only render headline for Bold template
       if (hasOverlay && overlay && overlay.headline) {
@@ -356,12 +359,12 @@ async function renderTemplate(
         ctx.fillStyle = "#ffffff";
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
-        wrapText(ctx, overlay.headline, width / 2, boldTextY, width * 0.85, 160);
+        boldTextBottom = wrapText(ctx, overlay.headline, width / 2, 260, width * 0.85, 160);
       }
 
       if (img) {
         // Calculate image position - use native aspect ratio
-        const frameStartY = hasOverlay && overlay && overlay.headline ? 520 : 300;
+        const frameStartY = hasOverlay && overlay && overlay.headline ? Math.max(520, boldTextBottom + 40) : 300;
         const availableHeight = height - frameStartY - 200;
         const maxImageWidth = width * 0.80;
         
@@ -476,6 +479,7 @@ async function renderTemplate(
       ctx.globalAlpha = 1.0;
       
       // 3. Draw headline at top - tighter spacing
+      let perfectTextBottom = 60;
       if (hasOverlay && overlay) {
         const textPadding = 100;
         let textY = 60;
@@ -485,8 +489,8 @@ async function renderTemplate(
           ctx.fillStyle = colors.text;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
-          textY += 140;
+          textY = wrapText(ctx, overlay.headline, textPadding, textY, width - textPadding * 2, 140);
+          textY += 24; // Gap between headline and subhead
         }
         
         if (overlay.subhead) {
@@ -495,9 +499,11 @@ async function renderTemplate(
           ctx.globalAlpha = 0.8;
           ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 70);
+          textY = wrapText(ctx, overlay.subhead, textPadding, textY, width - textPadding * 2, 70);
           ctx.globalAlpha = 1.0;
         }
+        
+        perfectTextBottom = textY;
       }
       
       // 4. Draw phone with screenshot - thin bezel, image determines height
@@ -509,9 +515,9 @@ async function renderTemplate(
         let frameWidth = maxFrameWidth;
         let frameHeight = frameWidth / imgAspect;
         
-        // Position frame
+        // Position frame below text with spacing
         const frameX = (width - frameWidth) / 2;
-        const frameY = hasOverlay ? 350 : (height - frameHeight) / 2;
+        const frameY = hasOverlay ? Math.max(350, perfectTextBottom + 40) : (height - frameHeight) / 2;
         const frameRadius = 80;
         const bezelWidth = 4;
         
@@ -557,8 +563,8 @@ function wrapText(
   y: number,
   maxWidth: number,
   lineHeight: number
-) {
-  if (!text) return;
+): number {
+  if (!text) return y;
   
   const words = text.split(" ");
   let line = "";
@@ -578,6 +584,7 @@ function wrapText(
     }
   }
   ctx.fillText(line, x, currentY);
+  return currentY + lineHeight;
 }
 
 function roundRect(

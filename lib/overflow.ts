@@ -20,64 +20,83 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
     // Growth template: Roboto Condensed 110px uppercase + Courier Prime 58px
     const textPadding = 80;
     const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1160px
-    const availableHeight = 400; // From y=100 to phone y=500
+    const textStartY = 100;
     
-    let totalUsed = 0;
+    let textBottom = textStartY;
     
     if (overlay.headline) {
       ctx.font = `700 110px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
       const headlineHeight = measureTextHeight(ctx, overlay.headline.toUpperCase(), maxWidth, 130);
-      totalUsed += headlineHeight;
+      textBottom += headlineHeight;
       
-      // Gap after headline before subhead (matches export.ts line 290)
+      // Gap after headline before subhead
       if (overlay.subhead) {
-        totalUsed += 150;
+        textBottom += 20;
       }
     }
     
     if (overlay.subhead) {
       ctx.font = `700 58px Courier Prime, "Courier New", monospace`;
       const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, 72);
-      totalUsed += subheadHeight;
+      textBottom += subheadHeight;
     }
     
-    return totalUsed > availableHeight;
+    // Phone would be positioned at Math.max(500, textBottom + 40)
+    // Overflow if type takes more than ~35% of canvas height
+    const phoneMinY = textBottom + 40;
+    const maxReasonableTypeHeight = EXPORT_HEIGHT * 0.35; // ~1004px
+    
+    return phoneMinY > maxReasonableTypeHeight;
     
   } else if (templateId === 'framed_on_gradient') {
     // Bold template: System font 140px, headline only
     const maxWidth = EXPORT_WIDTH * 0.85; // 1122px
     const lineHeight = 160;
+    const textStartY = 260;
     
     if (!overlay.headline) return false;
     
     ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
     const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, lineHeight);
     
-    // Bold has generous space; use conservative estimate
-    const availableHeight = 800;
-    return headlineHeight > availableHeight;
+    // Screenshot mat would be positioned at Math.max(520, textStartY + headlineHeight + 40)
+    // Bold has generous space; overflow only if text is unreasonably tall
+    const matMinY = textStartY + headlineHeight + 40;
+    const maxReasonableTypeHeight = EXPORT_HEIGHT * 0.30; // ~860px
+    
+    return matMinY > maxReasonableTypeHeight;
     
   } else {
     // Perfect template (full_bleed_caption_bottom) and default: System font 120px + 56px
     const textPadding = 100;
     const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1120px
-    const availableHeight = 290; // From y=60 to phone y=350
+    const textStartY = 60;
     
-    let totalUsed = 0;
+    let textBottom = textStartY;
     
     if (overlay.headline) {
       ctx.font = `900 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
       const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, 140);
-      totalUsed += headlineHeight;
+      textBottom += headlineHeight;
+      
+      // Gap between headline and subhead
+      if (overlay.subhead) {
+        textBottom += 24;
+      }
     }
     
     if (overlay.subhead) {
       ctx.font = `56px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
       const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, 70);
-      totalUsed += subheadHeight;
+      textBottom += subheadHeight;
     }
     
-    return totalUsed > availableHeight;
+    // Phone would be positioned at Math.max(350, textBottom + 40)
+    // Overflow if type takes more than ~35% of canvas height, leaving phone unusably small
+    const phoneMinY = textBottom + 40;
+    const maxReasonableTypeHeight = EXPORT_HEIGHT * 0.35; // ~1004px
+    
+    return phoneMinY > maxReasonableTypeHeight;
   }
 }
 
