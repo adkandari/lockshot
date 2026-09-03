@@ -5,6 +5,9 @@ const EXPORT_HEIGHT = 2868;
 
 export function measureOverflow(overlay: SlideOverlay, templateId?: string): boolean {
   if (typeof document === 'undefined') return false;
+  
+  // Empty overlays never overflow
+  if (!overlay.headline && !overlay.subhead) return false;
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
