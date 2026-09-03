@@ -1,0 +1,50 @@
+<svg width="1320" height="2868" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1320" height="2868" fill="#F5F1E8"/>
+  
+  <!-- Status bar -->
+  <rect width="1320" height="88" fill="#F5F1E8"/>
+  <text x="660" y="60" font-family="system-ui, -apple-system" font-size="40" fill="#1A1A1A" text-anchor="middle" font-weight="500">9:41</text>
+  
+  <!-- Back button -->
+  <text x="80" y="200" font-family="system-ui" font-size="56" fill="#1A1A1A" text-anchor="start"></text>
+  <text x="180" y="200" font-family="system-ui, -apple-system" font-size="48" font-weight="600" fill="#1A1A1A" text-anchor="start">Talk</text>
+  
+  <!-- Video preview -->
+  <rect x="80" y="280" width="1160" height="800" rx="36" fill="white" opacity="0.95"/>
+  <circle cx="660" cy="680" r="200" fill="#D4A574"/>
+  <rect x="180" y="960" width="280" height="80" rx="20" fill="#666" opacity="0.85"/>
+  <text x="210" y="1015" font-family="system-ui" font-size="36" fill="white" text-anchor="start">=ù Talking video</text>
+  <rect x="1060" y="960" width="80" height="80" rx="20" fill="#333" opacity="0.7"/>
+  <text x="1100" y="1015" font-family="system-ui" font-size="40" fill="white" text-anchor="middle">=</text>
+  
+  <!-- Title -->
+  <text x="80" y="1240" font-family="system-ui, -apple-system" font-size="76" font-weight="700" fill="#1A1A1A" text-anchor="start">Roast my human</text>
+  
+  <!-- Stats -->
+  <text x="80" y="1340" font-family="system-ui" font-size="44" fill="#C9754A" text-anchor="start">¡ 50</text>
+  <text x="280" y="1340" font-family="system-ui" font-size="44" fill="#666" text-anchor="start">=ù Video</text>
+  <text x="520" y="1340" font-family="system-ui" font-size="44" fill="#666" text-anchor="start">0:08</text>
+  
+  <!-- Description -->
+  <text x="80" y="1460" font-family="system-ui" font-size="46" fill="#666" text-anchor="start">Your pet says it  in their own voice.</text>
+  
+  <!-- Your Pet section -->
+  <text x="80" y="1600" font-family="system-ui" font-size="36" font-weight="600" fill="#999" text-anchor="start">YOUR PET</text>
+  
+  <rect x="80" y="1660" width="1160" height="180" rx="28" fill="white" opacity="0.9"/>
+  <text x="180" y="1740" font-family="system-ui" font-size="38" fill="#C9754A" text-anchor="start">=> My Pets</text>
+  <text x="900" y="1740" font-family="system-ui" font-size="38" fill="#999" text-anchor="start">=÷ Upload Photo</text>
+  
+  <rect x="100" y="1900" width="1120" height="200" rx="28" fill="white" opacity="0.95"/>
+  <circle cx="220" cy="2000" r="70" fill="#B89080"/>
+  <text x="340" y="1990" font-family="system-ui" font-size="52" font-weight="600" fill="#1A1A1A" text-anchor="start">Ranger</text>
+  <text x="340" y="2050" font-family="system-ui" font-size="40" fill="#C9754A" text-anchor="start">Dog · your pet</text>
+  <text x="1060" y="2000" font-family="system-ui" font-size="44" fill="#C9754A" text-anchor="end">ó Change</text>
+  
+  <!-- Generate button -->
+  <rect x="80" y="2600" width="1160" height="180" rx="28" fill="#C9754A"/>
+  <text x="660" y="2710" font-family="system-ui" font-size="56" font-weight="600" fill="white" text-anchor="middle">( Generate · ¡ 50</text>
+  
+  <!-- Bottom safe area -->
+  <rect width="1320" height="100" y="2768" fill="#F5F1E8"/>
+</svg>
