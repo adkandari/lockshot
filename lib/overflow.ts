@@ -1,9 +1,9 @@
-import { SlideOverlay, TemplateId } from './types';
+import { SlideOverlay } from './types';
 
 const EXPORT_WIDTH = 1320;
 const EXPORT_HEIGHT = 2868;
 
-export function measureOverflow(overlay: SlideOverlay, templateId?: TemplateId): boolean {
+export function measureOverflow(overlay: SlideOverlay, templateId?: string): boolean {
   if (typeof document === 'undefined') return false;
   
   // Empty overlays never overflow
@@ -12,21 +12,6 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: TemplateId):
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
-
-  // Bold/framed_on_gradient has no subhead, so only check headline
-  if (templateId === 'framed_on_gradient') {
-    // For Bold template, only headline is shown
-    if (!overlay.headline) return false;
-    
-    const boxWidth = EXPORT_WIDTH - 200;
-    const maxWidth = boxWidth * 0.85;
-    const headlineFontSize = 120;
-    ctx.font = `900 ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-    const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, headlineFontSize * 1.15);
-    
-    // Bold template has more space for headline
-    return headlineHeight > 400;
-  }
 
   // Measurements for Perfect and Growth top caption areas
   const boxWidth = EXPORT_WIDTH - 200; // 100px padding on each side
@@ -37,11 +22,15 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: TemplateId):
   ctx.font = `900 ${headlineFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
   const headlineHeight = measureTextHeight(ctx, overlay.headline, maxWidth, headlineFontSize * 1.15);
 
-  const subheadFontSize = 64;
-  ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-  const subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
+  // Bold template (framed_on_gradient) has no subhead
+  let subheadHeight = 0;
+  if (templateId !== 'framed_on_gradient') {
+    const subheadFontSize = 64;
+    ctx.font = `${subheadFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+    subheadHeight = measureTextHeight(ctx, overlay.subhead, maxWidth, subheadFontSize * 1.25);
+  }
 
-  const totalHeight = headlineHeight + subheadHeight + 60; // padding between headline/subhead
+  const totalHeight = headlineHeight + subheadHeight + (subheadHeight > 0 ? 60 : 0); // padding only if subhead exists
   const availableHeight = boxHeight;
 
   return totalHeight > availableHeight;
@@ -75,7 +64,7 @@ function measureTextHeight(
 }
 
 export function measureAllOverflows(
-  slides: Array<{ overlays: Record<string, SlideOverlay>; templateId?: TemplateId }>,
+  slides: Array<{ overlays: Record<string, SlideOverlay>; templateId?: string }>,
   locales: string[]
 ): Record<number, Record<string, boolean>> {
   const overflows: Record<number, Record<string, boolean>> = {};

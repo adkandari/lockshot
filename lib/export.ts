@@ -339,7 +339,7 @@ async function renderTemplate(
       }
       break;
 
-    case "framed_on_gradient": // Astra: Dark navy + lavender
+    case "framed_on_gradient": // Bold: Dark navy + lavender
       // Deep navy gradient
       const gradientBg = ctx.createLinearGradient(0, 0, width, height);
       gradientBg.addColorStop(0, "#0f172a"); // slate-900
@@ -348,51 +348,61 @@ async function renderTemplate(
       ctx.fillStyle = gradientBg;
       ctx.fillRect(0, 0, width, height);
 
-      let frameY = 780;
+      let boldTextY = 260;
       
-      if (hasOverlay && overlay) {
-        let textY = 260;
-
-        if (overlay.headline) {
-          ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#ffffff";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          wrapText(ctx, overlay.headline, width / 2, textY, width * 0.85, 160);
-          textY += 200;
-        }
-
-        if (overlay.subhead) {
-          ctx.font = `76px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
-          ctx.fillStyle = "#e9d5ff"; // purple-200
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          wrapText(ctx, overlay.subhead, width / 2, textY, width * 0.85, 92);
-        }
+      // Only render headline for Bold template
+      if (hasOverlay && overlay && overlay.headline) {
+        ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        wrapText(ctx, overlay.headline, width / 2, boldTextY, width * 0.85, 160);
       }
 
       if (img) {
-        const frameWidth = width * 0.65;
-        const frameHeight = frameWidth * (19.5 / 9);
-        const frameX = (width - frameWidth) / 2;
-        const frameRadius = 112;
+        // Calculate image position - use native aspect ratio
+        const frameStartY = hasOverlay && overlay && overlay.headline ? 520 : 300;
+        const availableHeight = height - frameStartY - 200;
+        const maxImageWidth = width * 0.80;
+        
+        const imgAspect = img.width / img.height;
+        let imageWidth = maxImageWidth;
+        let imageHeight = imageWidth / imgAspect;
+        
+        // Ensure image fits in available space
+        if (imageHeight > availableHeight) {
+          imageHeight = availableHeight;
+          imageWidth = imageHeight * imgAspect;
+        }
+        
+        const imageX = (width - imageWidth) / 2;
+        const imageY = frameStartY + (availableHeight - imageHeight) / 2;
+        const imageRadius = 80;
+        const borderWidth = 32;
 
-        // Main frame with lavender ring accent
         ctx.save();
         
-        // Lavender accent ring
-        ctx.strokeStyle = "rgba(196, 181, 253, 0.3)"; // purple-300 with opacity
-        ctx.lineWidth = 6;
+        // Drop shadow
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = 60;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 30;
+        
+        // Lavender border/mat around the image
+        ctx.strokeStyle = "rgba(196, 181, 253, 0.4)";
+        ctx.lineWidth = borderWidth;
         ctx.beginPath();
-        roundRect(ctx, frameX - 3, frameY - 3, frameWidth + 6, frameHeight + 6, frameRadius + 3);
+        roundRect(ctx, imageX, imageY, imageWidth, imageHeight, imageRadius);
         ctx.stroke();
         
+        // Clip to rounded rect for image
+        ctx.shadowColor = "transparent";
         ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
+        roundRect(ctx, imageX, imageY, imageWidth, imageHeight, imageRadius);
         ctx.clip();
-        ctx.fillStyle = "#000000";
-        ctx.fill();
-        ctx.drawImage(img, frameX, frameY, frameWidth, frameHeight);
+        
+        // Draw image at native aspect ratio
+        ctx.drawImage(img, imageX, imageY, imageWidth, imageHeight);
         ctx.restore();
       }
       break;

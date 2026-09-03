@@ -33,7 +33,7 @@ const COMMON_LOCALES = [
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
   { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
   { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
-  { id: "framed_on_gradient", name: "Astra", description: "Dark navy with lavender accents" },
+  { id: "framed_on_gradient", name: "Bold", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -347,6 +347,32 @@ export default function LockhotDesk() {
     });
   };
 
+  const handleOverlayChange = (slideId: number, headline: string, subhead: string) => {
+    setSlides(prev => {
+      const updated = prev.map(s => {
+        if (s.id === slideId) {
+          return {
+            ...s,
+            overlays: {
+              ...s.overlays,
+              [currentLocale]: {
+                headline,
+                subhead,
+                author: 'user' as const,
+              },
+            },
+          };
+        }
+        return s;
+      });
+      if (currentProject) {
+        const updatedProject = { ...currentProject, slides: updated };
+        setCurrentProject(updatedProject);
+      }
+      return updated;
+    });
+  };
+
   const handleStartOver = () => {
     setCurrentProject(null);
     setSlides([]);
@@ -510,43 +536,29 @@ export default function LockhotDesk() {
 
   if (showEmptyState) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Lockshot</h1>
-            <p className="text-gray-600">App Store Screenshot Localization Desk</p>
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-              <span
-                className={`inline-block w-3 h-3 rounded-full ${
-                  webMcpState.enabled ? "bg-green-500" : webMcpState.error ? "bg-red-500" : "bg-gray-300"
-                }`}
-              />
-              <span className={`text-gray-600 ${webMcpState.error ? "text-red-600" : ""}`}>
-                {statusText}
-              </span>
-            </div>
-          </div>
-
+      <div className="min-h-screen bg-paper">
+        <div className="max-w-4xl mx-auto px-6 py-16">
+          <h1 className="text-5xl font-bold text-ink mb-16 leading-tight">
+            Ship the same app screens<br />in every language.
+          </h1>
+          
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-4 border-dashed rounded-xl p-16 text-center cursor-pointer transition-all ${
+            className={`bg-surface border-2 border-dashed rounded-[22px] p-12 text-center cursor-pointer transition-all mb-8 ${
               isDragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50"
+                ? "border-model bg-model-soft"
+                : "border-line hover:border-model hover:bg-model-soft"
             }`}
           >
             <div className="text-6xl mb-4">📸</div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Drop Screenshots Here
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Or click to select up to 5 PNG/JPG files
+            <p className="text-lg font-semibold text-ink mb-2">
+              Drop screenshots here
             </p>
-            <p className="text-sm text-gray-500">
-              Raw simulator or device screenshots work best
+            <p className="text-sm text-ink-2">
+              Or click to select images
             </p>
             <input
               ref={fileInputRef}
@@ -558,55 +570,74 @@ export default function LockhotDesk() {
             />
           </div>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>After uploading, pick a template and let ChatGPT write your copy in any locale</p>
+          <div className="flex items-center justify-center mb-8">
+            <div className="inline-flex items-center gap-2 px-5 py-3 bg-surface border border-line rounded-[14px] shadow-card text-sm">
+              <span className="text-ink-2">Copy is written by ·</span>
+              <span className="font-semibold text-ink">ChatGPT</span>
+              <span className="text-ink-2">, over MCP</span>
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${webMcpState.enabled ? "bg-live" : "bg-ink-3"}`} />
+            </div>
           </div>
+
+          <ul className="space-y-3 text-[15px] text-ink-2">
+            <li className="flex items-start gap-3">
+              <span className="text-model font-bold">→</span>
+              <span>Pick a template (Perfect / Growth / Bold)</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-model font-bold">→</span>
+              <span>Add locales — ChatGPT writes them via MCP tools</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-model font-bold">→</span>
+              <span>Export size: <span className="font-semibold text-ink">1320 × 2868</span> pixels per frame</span>
+            </li>
+          </ul>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <header className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lockshot</h1>
-            <p className="text-gray-600 mt-1">
-              App Store Screenshot Localization Desk
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleStartOver}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
-            >
-              🔄 Start Over
-            </button>
-            <div className="flex items-center gap-2 text-sm">
-              <span
-                className={`inline-block w-3 h-3 rounded-full ${
-                  webMcpState.enabled ? "bg-green-500" : webMcpState.error ? "bg-red-500" : "bg-gray-300"
-                }`}
-              />
-              <span className={`text-gray-600 ${webMcpState.error ? "text-red-600" : ""}`}>
-                {statusText}
-              </span>
+    <div className="min-h-screen bg-paper">
+      <header className="sticky top-0 z-50 bg-paper/90 backdrop-blur-md border-b border-line">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-ink tracking-tight">Lockshot</h1>
+              <p className="text-sm text-ink-3 mt-0.5">
+                App Store Screenshot Localization
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-line rounded-[14px] text-sm">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${webMcpState.enabled ? "bg-live shadow-[0_0_0_3px_rgba(27,158,95,0.15)]" : "bg-ink-3"}`} />
+                <span className="text-ink-2">{statusText}</span>
+              </div>
+              <button
+                onClick={handleStartOver}
+                className="px-4 py-2 bg-transparent border border-line text-ink-2 rounded-[14px] hover:bg-line-soft transition-colors font-medium text-sm"
+              >
+                Start over
+              </button>
+              <button
+                onClick={handleExport}
+                className="px-4 py-2 bg-ink text-surface rounded-[14px] hover:bg-black transition-colors font-medium text-sm"
+              >
+                Export set
+              </button>
             </div>
           </div>
         </div>
+      </header>
 
-        {currentProject && (
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">{currentProject.name}</h2>
-          </div>
-        )}
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
         <div className="space-y-4">
           {/* Alert Banner */}
           {alertBanner?.visible && (
             <div 
-              className="relative bg-indigo-600 text-white px-6 py-4 rounded-lg shadow-lg border-l-4 border-indigo-800 flex items-start gap-4"
+              className="relative bg-surface border-2 border-model px-6 py-4 rounded-[14px] shadow-card flex items-start gap-4"
               role="alert"
               aria-live="assertive"
             >
@@ -614,12 +645,12 @@ export default function LockhotDesk() {
                 {alertBanner.type === 'write-headlines' ? '✏️' : '🖼️'}
               </div>
               <div className="flex-1">
-                <div className="font-bold text-lg mb-1">
+                <div className="font-semibold text-base text-ink mb-1">
                   {alertBanner.type === 'write-headlines' 
                     ? 'Copied — paste it in the ChatGPT chat' 
                     : 'Copied — paste it in the ChatGPT chat'}
                 </div>
-                <div className="text-sm text-indigo-100">
+                <div className="text-sm text-ink-2">
                   {alertBanner.type === 'write-headlines'
                     ? 'ChatGPT will write overlay text for your slides using the site tools.'
                     : 'ChatGPT will set the campaign overlay text and generate a text-free lifestyle photo. Drop the generated photo on the campaign slot below (not Replace Screenshots).'}
@@ -627,7 +658,7 @@ export default function LockhotDesk() {
               </div>
               <button
                 onClick={() => setAlertBanner(null)}
-                className="flex-shrink-0 text-white hover:text-indigo-200 text-xl font-bold"
+                className="flex-shrink-0 text-ink-2 hover:text-ink text-xl font-bold"
                 aria-label="Dismiss alert"
               >
                 ×
@@ -635,11 +666,9 @@ export default function LockhotDesk() {
             </div>
           )}
           
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              <label className="text-[11px] text-gray-500">Template</label>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="space-y-2">
+            <label className="text-[11px] text-ink-3 px-1">Template</label>
+            <div className="inline-flex bg-surface border border-line rounded-[14px] p-1 gap-1">
               {TEMPLATES.map(template => {
               // Determine active template (most common among slides)
               const templateCounts = slides.reduce((acc, slide) => {
@@ -654,10 +683,10 @@ export default function LockhotDesk() {
                 <button
                   key={template.id}
                   onClick={() => handleSetTemplate(template.id)}
-                  className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium rounded-[9px] transition-colors ${
                     isActive 
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'bg-ink text-surface' 
+                      : 'text-ink-2 hover:bg-line-soft'
                   }`}
                   title={template.description}
                 >
@@ -668,206 +697,201 @@ export default function LockhotDesk() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[11px] text-ink-3 px-1">Locale</label>
             <div className="flex items-center gap-3 flex-wrap">
-              <label className="text-[11px] text-gray-500">Locale</label>
-            </div>
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <select
-                value={currentLocale}
-                onChange={(e) => setCurrentLocale(e.target.value as Locale)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {locales.map((locale) => {
-                  const localeInfo = COMMON_LOCALES.find(l => l.code === locale);
-                  const enOverlay = slides[0]?.overlays['en'];
-                  const currentOverlay = slides[0]?.overlays[locale];
-                  const isDraft = locale !== 'en' && 
-                    enOverlay && currentOverlay && 
-                    enOverlay.headline === currentOverlay.headline &&
-                    enOverlay.subhead === currentOverlay.subhead;
-                  
-                  return (
-                    <option key={locale} value={locale}>
-                      {localeInfo ? `${localeInfo.flag} ${localeInfo.name}` : locale}
-                      {isDraft ? ' (draft)' : ''}
-                    </option>
-                  );
-                })}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-              {showAddLocale ? (
-                <>
-                  <select
-                    value={newLocaleCode}
-                    onChange={(e) => setNewLocaleCode(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    <option value="">Select locale...</option>
-                    {COMMON_LOCALES.filter(l => !locales.includes(l.code)).map(locale => (
-                      <option key={locale.code} value={locale.code}>
-                        {locale.flag} {locale.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => newLocaleCode && handleAddLocale(newLocaleCode)}
-                    disabled={!newLocaleCode}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:bg-gray-300"
-                  >
-                    Add
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowAddLocale(false);
-                      setNewLocaleCode('');
-                    }}
-                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
+              {locales.map((locale) => {
+              const localeInfo = COMMON_LOCALES.find(l => l.code === locale);
+              return (
                 <button
-                  onClick={() => setShowAddLocale(true)}
-                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  key={locale}
+                  onClick={() => setCurrentLocale(locale)}
+                  className={`inline-flex items-center gap-2 px-3 py-2 bg-surface border rounded-[14px] font-jetbrains text-sm font-medium transition-colors ${
+                    currentLocale === locale
+                      ? 'border-ink text-ink'
+                      : 'border-line text-ink-2 hover:bg-line-soft'
+                  }`}
                 >
-                  + Add Locale
+                  <span>{localeInfo?.flag || '🌐'}</span>
+                  <span>{locale}</span>
+                  {locales.length > 1 && (
+                    <span 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const updatedLocales = locales.filter(l => l !== locale);
+                        setLocales(updatedLocales);
+                        if (currentLocale === locale) {
+                          setCurrentLocale(updatedLocales[0] || 'en');
+                        }
+                      }}
+                      className="text-ink-3 hover:text-ink text-base leading-none cursor-pointer"
+                    >
+                      ×
+                    </span>
+                  )}
                 </button>
+              );
+            })}
+            
+            {showAddLocale ? (
+              <>
+                <select
+                  value={newLocaleCode}
+                  onChange={(e) => setNewLocaleCode(e.target.value)}
+                  className="px-3 py-2 bg-surface border border-line rounded-[14px] text-sm font-jetbrains text-ink-2 focus:outline-none focus:border-model"
+                >
+                  <option value="">Select locale...</option>
+                  {COMMON_LOCALES.filter(l => !locales.includes(l.code)).map(locale => (
+                    <option key={locale.code} value={locale.code}>
+                      {locale.flag} {locale.code} — {locale.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => newLocaleCode && handleAddLocale(newLocaleCode)}
+                  disabled={!newLocaleCode}
+                  className="px-3 py-2 bg-ink text-surface rounded-[14px] hover:bg-black transition-colors text-sm font-medium disabled:opacity-40"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddLocale(false);
+                    setNewLocaleCode('');
+                  }}
+                  className="px-3 py-2 bg-transparent border border-line text-ink-2 rounded-[14px] hover:bg-line-soft transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAddLocale(true)}
+                className="px-3 py-2 bg-transparent border-2 border-dashed border-line text-ink-2 rounded-[14px] hover:bg-line-soft hover:border-ink-2 transition-colors text-sm font-medium"
+              >
+                + Add locale
+              </button>
               )}
-              <span className="text-xs text-gray-500">
-                💬 ChatGPT writes this locale via tools
-              </span>
             </div>
-          </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={handleWriteHeadlines}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+              className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
+              style={{ backgroundColor: '#0F7FD8' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
             >
-              ✏️ Write Headlines
+              ✏️ Write headlines
             </button>
 
             {slides.some(s => s.kind === "campaign" && !s.imageKey) && (
               <button
                 onClick={handleGenerateCampaignPhoto}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
+                style={{ backgroundColor: '#0F7FD8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
                 title="Generate a lifestyle photo for the campaign slide"
               >
-                🖼️ Generate Campaign Photo
+                🖼️ Generate campaign photo
               </button>
             )}
 
             <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-transparent border border-line text-ink-2 rounded-[9px] hover:bg-line-soft transition-colors text-sm"
             >
-              Export ZIP
+              Replace screenshots
             </button>
-          </div>
-
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-              >
-                📸 Replace Screenshots
-              </button>
-              <span className="text-sm text-gray-600">
-                Click to select up to 5 new images
-              </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleReplaceScreenshots(Array.from(e.target.files));
-                  }
-                }}
-                className="hidden"
-              />
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) {
+                  handleReplaceScreenshots(Array.from(e.target.files));
+                }
+              }}
+              className="hidden"
+            />
           </div>
         </div>
-      </header>
-
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Slides</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {slides.filter(s => s.kind !== "campaign").map((slide) => (
-          <SlideCard
-            key={slide.id}
-            slide={slide}
-            currentLocale={currentLocale}
-            onToggleLock={toggleLock}
-            onFileUpload={(file) => handleFileUpload(slide.id, file)}
-            onColorChange={handleColorChange}
-          />
-        ))}
       </div>
 
-      {/* Campaign slide section for Growth template - BELOW product slides */}
-      {slides.some(s => s.templateId === "caption_top") && (() => {
-        const campaignSlide = slides.find(s => s.kind === "campaign");
-        if (!campaignSlide) return null;
-        
-        return (
-          <div className="mt-8 pt-8 border-t-2 border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              📸 Campaign Slide (Growth template)
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Optional lifestyle/campaign slide, not a phone screenshot. Drop a ChatGPT-generated lifestyle photo here after clicking Generate Campaign Photo.
-            </p>
+      {/* Tray with horizontal scroll */}
+      <div className="bg-tray rounded-[22px] p-6 shadow-[inset_0_1px_3px_rgba(25,26,28,0.08)] overflow-x-auto">
+        <div className="flex gap-6" style={{ minWidth: '380px' }}>
+          {/* Product Slides */}
+          {slides.filter(s => s.kind !== "campaign").map((slide) => (
+            <div key={slide.id} className="flex-shrink-0 w-[min(340px,90vw)]">
+              <SlideCard
+                slide={slide}
+                currentLocale={currentLocale}
+                onToggleLock={toggleLock}
+                onFileUpload={(file) => handleFileUpload(slide.id, file)}
+                onColorChange={handleColorChange}
+                onOverlayChange={handleOverlayChange}
+              />
+            </div>
+          ))}
+          
+          {/* Campaign Cell for Growth template */}
+          {slides.some(s => s.templateId === "caption_top") && (() => {
+            const campaignSlide = slides.find(s => s.kind === "campaign");
+            if (!campaignSlide) return null;
             
-            {!campaignSlide.imageKey && !campaignSlide.backgroundImage ? (
-              <div
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const file = e.dataTransfer.files[0];
-                  if (file && file.type.startsWith('image/')) {
-                    handleCampaignUpload(file);
-                  }
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = 'image/*';
-                  input.onchange = (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) handleCampaignUpload(file);
-                  };
-                  input.click();
-                }}
-                className="border-4 border-dashed border-indigo-300 rounded-xl p-12 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 transition-all bg-indigo-50/20"
-              >
-                <div className="text-5xl mb-3">🖼️</div>
-                <p className="text-lg font-medium text-gray-700">Drop ChatGPT-generated lifestyle photo here</p>
-                <p className="text-sm text-gray-500 mt-2">Click to select or drag and drop</p>
-                <p className="text-xs text-indigo-600 mt-3 font-medium">Text overlay will be composited by Lockshot</p>
-              </div>
-            ) : (
-              <div className="max-w-md">
+            if (!campaignSlide.imageKey && !campaignSlide.backgroundImage) {
+              return (
+                <div
+                  key="campaign"
+                  className="flex-shrink-0 w-[min(340px,90vw)]"
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                      handleCampaignUpload(file);
+                    }
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) handleCampaignUpload(file);
+                    };
+                    input.click();
+                  }}
+                >
+                  <div 
+                    className="bg-transparent border-2 border-dashed border-line rounded-[22px] flex items-center justify-center text-ink-3 text-sm cursor-pointer hover:border-model hover:bg-model-soft transition-all"
+                    style={{ aspectRatio: '1320 / 2868' }}
+                  >
+                    + Campaign photo
+                  </div>
+                </div>
+              );
+            }
+            
+            return (
+              <div key="campaign" className="flex-shrink-0 w-[min(340px,90vw)]">
                 <SlideCard
                   slide={campaignSlide}
                   currentLocale={currentLocale}
                   onToggleLock={toggleLock}
                   onFileUpload={handleCampaignUpload}
                   onColorChange={handleColorChange}
+                  onOverlayChange={handleOverlayChange}
                 />
               </div>
-            )}
-          </div>
-        );
-      })()}
+            );
+          })()}
+        </div>
+      </div>
     </div>
   );
 }
