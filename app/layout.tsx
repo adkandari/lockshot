@@ -20,12 +20,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sourceSerif.variable} ${robotoCondensed.variable} ${courierPrime.variable} ${jetbrainsMono.variable}`}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <style dangerouslySetInnerHTML={{__html: `:root { --font-schibsted: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }`}} />
-      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );
