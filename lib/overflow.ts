@@ -17,7 +17,7 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
 
   // Match the exact rendering parameters from export.ts for each template
   if (templateId === 'caption_top') {
-    // Growth template: Roboto Condensed 110px uppercase + Courier Prime 58px
+    // Campaign template: Roboto Condensed 110px uppercase + Courier Prime 58px
     const textPadding = 120;
     const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1080px
     const textStartY = 100;
@@ -49,7 +49,7 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
     return phoneMinY > maxReasonableTypeHeight;
     
   } else if (templateId === 'framed_on_gradient') {
-    // Bold template: System font 140px, headline only
+    // Poster template: System font 140px, headline only
     const maxWidth = EXPORT_WIDTH * 0.85; // 1122px
     const lineHeight = 160;
     const textStartY = 260;
@@ -67,7 +67,7 @@ export function measureOverflow(overlay: SlideOverlay, templateId?: string): boo
     return matMinY > maxReasonableTypeHeight;
     
   } else {
-    // Perfect template (full_bleed_caption_bottom) and default: System font 120px + 56px
+    // Studio template (full_bleed_caption_bottom) and default: System font 120px + 56px
     const textPadding = 100;
     const maxWidth = EXPORT_WIDTH - textPadding * 2; // 1120px
     const textStartY = 60;

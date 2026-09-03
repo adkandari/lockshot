@@ -117,7 +117,7 @@ export async function registerWebMCPTools(
             has_overlay: !campaignOverlayEmpty,
             headline: campaignSlide?.overlays[locale]?.headline || '',
             subhead: campaignSlide?.overlays[locale]?.subhead || '',
-            hint: campaignEmpty ? "Campaign slide exists but needs a lifestyle photo — generate one via DALL-E or similar" : 
+            hint: campaignEmpty ? "Campaign slide exists but needs a designed graphic with typography — use the 'Generate campaign photo' button to create a finished 9:16 marketing image with the overlay text rendered into it" : 
                   campaignOverlayEmpty ? "Campaign slide needs overlay text — set headline and subhead with set_overlay for slide 0" : undefined,
           } : undefined,
           slides: currentSlides.filter(s => s.kind !== "campaign").map(slide => ({

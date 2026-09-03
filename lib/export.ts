@@ -50,8 +50,8 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     const overlay = slide.overlays[locale];
     const hasOverlay = !!(overlay && (overlay.headline || overlay.subhead));
 
-    // Extract colors for Perfect template only
-    // Growth uses fixed Dysperse palette
+    // Extract colors for Studio template only
+    // Campaign uses fixed Dysperse palette
     let extractedColors = null;
     if (slide.templateId === 'full_bleed_caption_bottom' && screenshotImg) {
       // Use slide override colors or extract from image
@@ -111,9 +111,9 @@ async function renderTemplate(
   const width = EXPORT_WIDTH;
   const height = EXPORT_HEIGHT;
 
-  // Special case: Campaign slide for Growth template
+  // Special case: Campaign slide for Campaign template
   if (slideKind === "campaign") {
-    // Fixed Growth palette for campaign slides (from PR #25)
+    // Fixed Campaign palette for campaign slides (from PR #25)
     const colors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
     const terracotta = 'rgb(195, 123, 84)';
     
@@ -133,59 +133,7 @@ async function renderTemplate(
     
     ctx.globalAlpha = 1.0;
     
-    // 3. Draw stacked headline on LEFT with last word in sage + terracotta squiggle
-    if (hasOverlay && overlay && overlay.headline) {
-      const words = overlay.headline.split(/\s+/);
-      const lastWord = words[words.length - 1];
-      const otherWords = words.slice(0, -1);
-      
-      const textX = 100;
-      let textY = height * 0.35; // Vertically centered-ish
-      
-      ctx.font = `900 200px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      
-      // Other words in dark text
-      ctx.fillStyle = colors.text;
-      for (const word of otherWords) {
-        ctx.fillText(word.toLowerCase(), textX, textY);
-        textY += 200;
-      }
-      
-      // Last word in sage
-      ctx.fillStyle = colors.dark;
-      ctx.fillText(lastWord.toLowerCase(), textX, textY);
-      
-      // Draw terracotta squiggle underline
-      const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
-      ctx.strokeStyle = terracotta;
-      ctx.lineWidth = 12;
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(textX, textY + 220);
-      ctx.bezierCurveTo(
-        textX + textWidth * 0.25, textY + 210,
-        textX + textWidth * 0.5, textY + 230,
-        textX + textWidth * 0.75, textY + 220
-      );
-      ctx.bezierCurveTo(
-        textX + textWidth * 0.875, textY + 215,
-        textX + textWidth, textY + 220,
-        textX + textWidth, textY + 220
-      );
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-      
-      textY += 260;
-      
-      // Subhead in Courier Prime
-      if (overlay.subhead) {
-        ctx.font = `700 56px Courier Prime, "Courier New", monospace`;
-        ctx.fillStyle = colors.text;
-        textY = wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
-      }
-    }
+    // 3. DO NOT draw overlay text - it's baked into the generated image
     
     // 4. Draw lifestyle photo RIGHT/bottom - rounded rect, NOT a phone
     if (img) {
@@ -232,8 +180,8 @@ async function renderTemplate(
   }
 
   switch (templateId) {
-    case "caption_top": // Growth: Cream campaign energy with top type
-      // Fixed Growth palette (user overrides take precedence)
+    case "caption_top": // Campaign: Cream campaign energy with top type
+      // Fixed Campaign palette (user overrides take precedence)
       const growthDefaultColors = { light: 'rgb(243, 232, 218)', dark: 'rgb(112, 125, 93)', text: 'rgb(68, 57, 45)' };
       const growthColors = {
         light: slideColors?.background || growthDefaultColors.light,
@@ -342,7 +290,7 @@ async function renderTemplate(
       }
       break;
 
-    case "framed_on_gradient": // Bold: Dark navy + lavender
+    case "framed_on_gradient": // Poster: Dark navy + lavender
       // Deep navy gradient
       const gradientBg = ctx.createLinearGradient(0, 0, width, height);
       gradientBg.addColorStop(0, "#0f172a"); // slate-900
@@ -353,7 +301,7 @@ async function renderTemplate(
 
       let boldTextBottom = 260;
       
-      // Only render headline for Bold template
+      // Only render headline for Poster template
       if (hasOverlay && overlay && overlay.headline) {
         ctx.font = `900 140px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
         ctx.fillStyle = "#ffffff";
@@ -439,7 +387,7 @@ async function renderTemplate(
       }
       break;
 
-    case "full_bleed_caption_bottom": // Perfect: Organic background + centered phone
+    case "full_bleed_caption_bottom": // Studio: Organic background + centered phone
     default:
       const colors = extractedColors || { light: 'rgb(243, 232, 255)', dark: 'rgb(196, 181, 253)', text: 'rgb(109, 40, 217)' };
       
@@ -451,7 +399,7 @@ async function renderTemplate(
       ctx.fillStyle = colors.dark;
       ctx.globalAlpha = 0.6;
       
-      // Top-right blob (Perfect template)
+      // Top-right blob (Studio template)
       const perfectBlob1X = width * 0.85;
       const perfectBlob1Y = height * 0.1;
       const perfectBlob1R = width * 0.35;
@@ -463,7 +411,7 @@ async function renderTemplate(
       ctx.arc(perfectBlob1X, perfectBlob1Y, perfectBlob1R, 0, Math.PI * 2);
       ctx.fill();
       
-      // Bottom-left blob (Perfect template)
+      // Bottom-left blob (Studio template)
       ctx.globalAlpha = 0.5;
       const perfectBlob2X = width * 0.15;
       const perfectBlob2Y = height * 0.9;

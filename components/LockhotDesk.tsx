@@ -31,9 +31,9 @@ const COMMON_LOCALES = [
 ];
 
 const TEMPLATES: { id: TemplateId; name: string; description: string }[] = [
-  { id: "full_bleed_caption_bottom", name: "Perfect", description: "Organic two-tone palette with centered phone frame" },
-  { id: "caption_top", name: "Growth", description: "Warm cream campaign energy, title over thin-bezel phone" },
-  { id: "framed_on_gradient", name: "Bold", description: "Dark navy with lavender accents" },
+  { id: "full_bleed_caption_bottom", name: "Studio", description: "Organic two-tone palette with centered phone frame" },
+  { id: "caption_top", name: "Campaign", description: "Warm cream campaign energy, title over thin-bezel phone" },
+  { id: "framed_on_gradient", name: "Poster", description: "Dark navy with lavender accents" },
 ];
 
 export default function LockhotDesk() {
@@ -205,7 +205,7 @@ export default function LockhotDesk() {
         return updatedSlide;
       });
       
-      // Handle campaign slide for Growth template
+      // Handle campaign slide for Campaign template
       if (template === "caption_top" && !slideId) {
         // Add empty campaign slide if it doesn't exist
         const hasCampaign = updated.some(s => s.kind === "campaign");
@@ -394,7 +394,7 @@ export default function LockhotDesk() {
     let prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
     
     if (hasGrowth && campaignEmpty) {
-      prompt += "\n\nIMPORTANT: This project uses the Growth template with an optional campaign slide. The campaign slide needs a lifestyle photo. Please also generate one vertical (9:16 or similar) photorealistic lifestyle photo that matches the app's aesthetic — warm cream studio, organic feel, no UI elements, no text overlays. The user will drop this generated image on the campaign slide. Describe the photo you want generated so the user can paste your description into DALL-E or similar.";
+      prompt += "\n\nIMPORTANT: This project uses the Campaign template with an optional campaign slide. The campaign slide needs a designed graphic with typography. You can generate one later with the 'Generate campaign photo' button, which will create a finished 9:16 marketing image with the campaign overlay text rendered into it.";
     }
     
     // Try 1: ChatGPT Apps sendFollowUpMessage
@@ -442,6 +442,9 @@ export default function LockhotDesk() {
   const handleGenerateCampaignPhoto = async () => {
     // Seed campaign overlay if empty
     const campaignSlide = slides.find(s => s.kind === "campaign");
+    let headlineText = 'focus plan thrive';
+    let subheadText = 'Less distraction. More direction.';
+    
     if (campaignSlide) {
       const overlay = campaignSlide.overlays[currentLocale];
       if (!overlay || (!overlay.headline && !overlay.subhead)) {
@@ -481,10 +484,14 @@ export default function LockhotDesk() {
           const updatedProject = { ...currentProject, slides: updatedSlides };
           setCurrentProject(updatedProject);
         }
+      } else {
+        // Use existing overlay text
+        headlineText = overlay.headline || headlineText;
+        subheadText = overlay.subhead || subheadText;
       }
     }
     
-    const prompt = "Use the site tools. First, check get_page_state to see the campaign slide overlay. If the campaign slide (id=0) has empty overlay text, use set_overlay to set: headline='focus plan thrive' (three lowercase words), subhead='Less distraction. More direction.' (short tagline) for the current locale.\n\nThen generate a vertical (9:16 aspect ratio) photorealistic lifestyle photo for the campaign. Style: warm cream/beige studio background, organic natural feel, soft lighting, minimalist composition. NO user interface elements, NO text overlays, NO words, NO devices, NO phone. Think elegant lifestyle portrait. The photo should complement a modern productivity/wellness app. The user will drop this generated image on the campaign slot (not Replace Screenshots). The overlay text will be composited on top by Lockshot.";
+    const prompt = `Use the site tools. First, check get_page_state to see the campaign slide overlay. If the campaign slide (id=0) has empty overlay text, use set_overlay to set: headline='focus plan thrive' (three lowercase words), subhead='Less distraction. More direction.' (short tagline) for the current locale.\n\nThen generate a vertical (9:16 aspect ratio) designed campaign graphic WITH typography included. This is a finished marketing image, not a text-free photo.\n\nCOPY TO RENDER IN THE IMAGE:\nHeadline: "${headlineText}"\nSubhead: "${subheadText}"\n\nLAYOUT: Split vertical layout — left ~40% is a cream/beige negative space column containing the stacked headline words and subhead. Right ~60% shows a lifestyle portrait/subject. The text must NOT overlap the person/photo — keep type confined to the left column.\n\nHEADLINE STYLING: If the headline is a short phrase (like "focus plan thrive"), stack each word on its own line in lowercase, using a bold condensed sans-serif. The last word should be in sage green with a terracotta hand-drawn squiggle underline. Earlier words in dark brown/charcoal.\n\nSUBHEAD STYLING: Place the subhead below the headline stack in a smaller serif or monospace font, dark brown/charcoal.\n\nPALETTE: Warm cream/beige background, sage green accent, terracotta accent, dark brown text. Organic, modern, minimalist.\n\nNO devices, NO phone UI, NO extra random words beyond the specified copy. The user will drop this finished graphic on the campaign slot. Because the type is baked into the image, Lockshot will NOT composite additional text on top.`;
     
     // Try sendFollowUpMessage
     if (typeof window !== 'undefined' && (window as any).openai?.sendFollowUpMessage) {
@@ -582,7 +589,7 @@ export default function LockhotDesk() {
           <ul className="space-y-3 text-[15px] text-ink-2">
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
-              <span>Pick a template (Perfect / Growth / Bold)</span>
+              <span>Pick a template (Studio / Campaign / Poster)</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-model font-bold">→</span>
@@ -653,7 +660,7 @@ export default function LockhotDesk() {
                 <div className="text-sm text-ink-2">
                   {alertBanner.type === 'write-headlines'
                     ? 'ChatGPT will write overlay text for your slides using the site tools.'
-                    : 'ChatGPT will set the campaign overlay text and generate a text-free lifestyle photo. Drop the generated photo on the campaign slot below (not Replace Screenshots).'}
+                    : 'ChatGPT will generate a finished campaign graphic with designed typography baked in. Drop it on the campaign slot below (not Replace Screenshots).'}
                 </div>
               </div>
               <button
@@ -793,7 +800,7 @@ export default function LockhotDesk() {
                 style={{ backgroundColor: '#0F7FD8' }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A5FAF'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F7FD8'}
-                title="Generate a lifestyle photo for the campaign slide"
+                title="Generate a designed campaign graphic with typography baked in"
               >
                 🖼️ Generate campaign photo
               </button>
@@ -838,7 +845,7 @@ export default function LockhotDesk() {
             </div>
           ))}
           
-          {/* Campaign Cell for Growth template */}
+          {/* Campaign Cell for Campaign template */}
           {slides.some(s => s.templateId === "caption_top") && (() => {
             const campaignSlide = slides.find(s => s.kind === "campaign");
             if (!campaignSlide) return null;
