@@ -82,9 +82,58 @@ export default function LockhotDesk() {
         setLocales(project.locales);
         setCurrentLocale(project.locales[0] || "en");
         setShowEmptyState(false);
+        return;
       }
     }
+    
+    // Load sample screenshots on first visit
+    loadSampleScreenshots();
   }, []);
+
+  const loadSampleScreenshots = async () => {
+    try {
+      const sampleFiles = [
+        '/assets/sc1.png',
+        '/assets/sc2.png',
+        '/assets/sc3.png'
+      ];
+
+      const newSlides = await Promise.all(
+        sampleFiles.map(async (path, index) => {
+          const response = await fetch(path);
+          const blob = await response.blob();
+          const file = new File([blob], path.split('/').pop() || 'sample.png', { type: 'image/png' });
+          
+          const imageKey = `sample-${Date.now()}-${index}`;
+          await saveImage(imageKey, file);
+
+          return {
+            id: index + 1,
+            templateId: "full_bleed_caption_bottom" as TemplateId,
+            backgroundImage: '',
+            imageKey,
+            overlays: { en: { headline: '', subhead: '' } },
+            locked: false,
+            comments: [],
+            overflow: { en: false },
+            kind: "product" as const,
+          };
+        })
+      );
+
+      const project = createProject('Sample Project', '', newSlides, ['en']);
+      setCurrentProject(project);
+      setSlides(newSlides);
+      setLocales(['en']);
+      setCurrentLocale('en');
+      saveProject(project);
+      saveCurrentProjectId(project.id);
+      setShowEmptyState(false);
+    } catch (error) {
+      console.error('Failed to load sample screenshots:', error);
+      // If samples fail to load, stay in empty state
+    }
+  };
 
   useEffect(() => {
     if (currentProject) {
@@ -380,6 +429,10 @@ export default function LockhotDesk() {
     setCurrentLocale('en');
     saveCurrentProjectId(null);
     setShowEmptyState(true);
+    // Reload sample screenshots after a brief moment
+    setTimeout(() => {
+      loadSampleScreenshots();
+    }, 100);
   };
 
   const handleReplaceScreenshots = async (files: File[]) => {
@@ -555,6 +608,19 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
             Ship the same app screens<br />in every language.
           </h1>
           
+          {/* Sample screenshots preview */}
+          <div className="mb-8 flex items-center justify-center gap-4">
+            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
+              <img src="/assets/sc1.png" alt="Sample 1" className="w-full h-full object-cover" />
+            </div>
+            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
+              <img src="/assets/sc2.png" alt="Sample 2" className="w-full h-full object-cover" />
+            </div>
+            <div className="w-[120px] h-[260px] rounded-[18px] bg-surface border border-line overflow-hidden shadow-card opacity-90">
+              <img src="/assets/sc3.png" alt="Sample 3" className="w-full h-full object-cover" />
+            </div>
+          </div>
+          
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -568,10 +634,10 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
           >
             <div className="text-6xl mb-4">📸</div>
             <p className="text-lg font-semibold text-ink mb-2">
-              Drop screenshots here
+              Add yours
             </p>
             <p className="text-sm text-ink-2">
-              Or click to select images
+              Drop screenshots or click to select
             </p>
             <input
               ref={fileInputRef}
@@ -790,6 +856,25 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
 
           <div className="flex items-center gap-3 flex-wrap">
             <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-model text-white rounded-[14px] hover:opacity-90 transition-opacity font-medium text-sm shadow-card"
+            >
+              📸 Add yours
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) {
+                  handleReplaceScreenshots(Array.from(e.target.files));
+                }
+              }}
+              className="hidden"
+            />
+            
+            <button
               onClick={handleWriteHeadlines}
               className="px-4 py-2 text-white rounded-[14px] transition-colors font-medium text-sm"
               style={{ backgroundColor: '#0F7FD8' }}
@@ -811,25 +896,6 @@ NO devices, NO phone UI, NO extra random words beyond the specified copy. The us
                 🖼️ Generate campaign photo
               </button>
             )}
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-transparent border border-line text-ink-2 rounded-[9px] hover:bg-line-soft transition-colors text-sm"
-            >
-              Replace screenshots
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                if (e.target.files) {
-                  handleReplaceScreenshots(Array.from(e.target.files));
-                }
-              }}
-              className="hidden"
-            />
           </div>
         </div>
       </div>

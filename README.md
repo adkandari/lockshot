@@ -30,29 +30,37 @@ Open `http://localhost:3000` in:
 - **ChatGPT Desktop** (Sol/Terra) in-app browser with site tools enabled, OR
 - **Chrome 149+** with `chrome://flags/#enable-webmcp-testing` enabled
 
+The desk opens with **3 sample iOS app screens** ready to go. Click **"Add yours"** to drop your own screenshots (max 5), or let ChatGPT start working with the samples immediately using the site tools.
+
 ## 90-Second Judge Demo Script
 
 Follow these steps in ChatGPT Desktop (in-app browser):
 
 1. **Open the live URL:** [lockshot-nu.vercel.app](https://lockshot-nu.vercel.app/)
-2. **Drop 3-5 clean iOS screenshots** into the drop zone (product screens, not App Store marketing)
-3. **Prompt:** "Pick the Studio template and write headlines for all slides"
+   - The desk opens with 3 sample iOS app screens (I Love My Pets app UI)
+   - No file upload needed — ChatGPT can use tools immediately
+   - **Optional:** Click "Add yours" to drop your own 3-5 clean iOS screenshots
+2. **Prompt:** "Pick the Studio template and write headlines for all slides"
    - Agent runs `set_template` with `full_bleed_caption_bottom`
-   - Agent runs `set_overlay` 3-5 times with headline + subhead for each slide
-4. **Prompt:** "Add German locale and translate all slides"
+   - Agent runs `set_overlay` 3 times with headline + subhead for each slide
+3. **Prompt:** "Add German locale and translate all slides"
    - Agent runs `add_locale` with locale code "de"
-   - Agent translates each slide by calling `set_overlay` 3-5 times with German text
+   - Agent translates each slide by calling `set_overlay` 3 times with German text
    - Overflow badges appear on slides where German text is too long (measured automatically via canvas)
+4. **Prompt:** "Fix any overflow by making the text shorter"
+   - Agent checks overflow with `check_overflow` or `get_page_state`
+   - Agent rewrites German text via `set_overlay` with shorter copy
+   - Overflow badge disappears (real measurement, not hardcoded)
 5. **Lock slide 1** by clicking the 🔓 button (turns to 🔒 Locked)
 6. **Prompt:** "Rewrite slide 1 headline to be shorter"
    - Agent tries `set_overlay` on locked slide
    - Returns clear error: `{"success": false, "error": "Slide 1 is locked", "locked": true}`
 7. **Prompt:** "Export the German screenshots"
    - Agent runs `export_zip`
-   - ZIP downloads with 3-5 PNG files: `lockshot-slide-1-de.png` through `lockshot-slide-5-de.png`
+   - ZIP downloads with 3 PNG files: `lockshot-slide-1-de.png` through `lockshot-slide-3-de.png`
    - Each file is exactly **1320×2868 pixels, no alpha channel, sRGB**
 
-**Expected result:** The agent writes copy, translates to German, measures overflow, respects human-locked slides, and exports production-ready App Store assets.
+**Expected result:** ChatGPT successfully writes copy, translates to German, measures overflow, respects human-locked slides, and exports production-ready App Store assets — all without anyone uploading files first.
 
 ## WebMCP Tools
 
@@ -60,14 +68,14 @@ All tools are registered on the top-level page using `document.modelContext.regi
 
 - **`get_page_state`** (read-only): Returns project info, current locale, all slide overlays, locked status, real-time overflow flags, comments
 - **`set_overlay(slide, headline?, subhead?)`**: Update text for a specific slide (0 for campaign, 1-5 for product slides). Fails if locked. Auto-measures overflow.
-- **`set_template(template, slide?)`**: Set template for all unlocked slides or a specific slide. Templates: `full_bleed_caption_bottom`, `caption_top`, `framed_on_gradient`, `gradient_only`
+- **`set_template(template, slide?)`**: Set template for all unlocked slides or a specific slide. Templates: `full_bleed_caption_bottom`, `caption_top`, `framed_on_gradient`
 - **`add_locale(locale)`**: Add a new BCP 47 locale code (e.g., de, es, ja, fr, pt-BR, zh-Hans). New locale overlays start empty—ChatGPT must translate via `set_overlay`.
 - **`set_locale(locale)`**: Switch between available locales
 - **`check_overflow`** (read-only): List all overflowing slides in current locale
 - **`rewrite_overlay(slide, instruction)`**: Helper that guides ChatGPT to generate new text and call `set_overlay` directly
 - **`apply_locale_pass(locale)`**: Identify all unlocked overflowing slides. ChatGPT should then rewrite them via `set_overlay`.
 - **`comment_on_slide(slide, text)`**: Add a visible comment to a slide
-- **`set_slide_colors(slide, text?, background?, accent?)`**: Set custom colors for Kova template (hex format). Overrides auto-sampled colors.
+- **`set_slide_colors(slide, text?, background?, accent?)`**: Set custom colors for templates (hex format). Overrides auto-sampled colors.
 - **`reset_project`**: Clear the current project and start over (wipes localStorage)
 - **`export_zip`**: Generate ZIP of 1320×2868 PNGs (no alpha, sRGB) with locale-specific filenames
 
@@ -83,19 +91,21 @@ All tools are registered on the top-level page using `document.modelContext.regi
 
 ## Architecture
 
-- **Drop Zone:** Human drops up to 5 screenshots. WebMCP cannot upload files, so screenshots must be dropped by the human.
+- **Sample Screenshots**: Three pre-loaded iOS app UI samples (cream/coral pet-app theme) load on first visit. WebMCP cannot upload files, so samples ensure immediate usability.
+- **Drop Zone:** Human can click "Add yours" to drop up to 5 custom screenshots, replacing samples.
 - **LocalStorage Projects:** Each project has id, name, locales[], slides[], createdAt. No database needed.
-- **Overflow Measurement:** Canvas `measureText` with export font sizes and box dimensions (85% width, 30% height). Measured on every `set_overlay` call.
+- **Overflow Measurement:** Canvas `measureText` with export font sizes (80px headline, 56px subhead) and box dimensions (85% width, 30% height). Measured on every `set_overlay` call.
 - **Campaign Slide:** Optional slide 0 with campaign graphic. "Generate campaign photo" button infers copy from product slides and bakes type into a 9:16 marketing image.
 - **Locked Slides:** Human can lock slides to prevent agent edits. Agent receives explicit error when attempting to edit locked slides.
+- **Image Proxy**: Next.js API route at `/api/image?url=` proxies external images to avoid CORS and canvas taint
 
 ## Scope
 
 - **1 device class:** iPhone 6.9" portrait (1320×2868 PNG)
-- **Up to 5 slides per project**
+- **Up to 5 slides per project** (start with 3 samples or drop your own screenshots via "Add yours")
 - **Dynamic locales:** Start with English, add any BCP 47 code (de, es, ja, fr, pt-BR, zh-Hans, etc.). New locales start empty—not copied from English.
 - **Real overflow measurement:** Not hardcoded, measured from actual text rendering
-- **Human controls:** Drop screenshots, template selection, locale management, lock/unlock per slide, export ZIP
+- **Human controls:** Drop screenshots via "Add yours", template selection, locale management, lock/unlock per slide, export ZIP
 - **Agent controls:** Write copy, add locales, translate, rewrite, check overflow, set colors, comment, export
 
 ## What This Is NOT
