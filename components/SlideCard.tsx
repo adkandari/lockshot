@@ -101,60 +101,7 @@ export default function SlideCard({
             style={{ backgroundColor: colors.dark, transform: 'translate(-25%, 25%)' }}
           />
           
-          {/* Type on the LEFT */}
-          {hasOverlay && (
-            <div className="absolute top-0 left-0 bottom-0 w-1/2 flex flex-col justify-center px-8 z-20">
-              {overlay.headline && (() => {
-                const words = overlay.headline.split(/\s+/);
-                const lastWord = words[words.length - 1];
-                const otherWords = words.slice(0, -1);
-                
-                return (
-                  <div className="mb-4">
-                    {otherWords.map((word, i) => (
-                      <h2 
-                        key={i}
-                        className="text-5xl font-black leading-none lowercase block" 
-                        style={{ fontFamily: 'var(--font-roboto-condensed), "Arial Narrow", Impact, sans-serif', color: colors.text }}
-                      >
-                        {word}
-                      </h2>
-                    ))}
-                    <div className="relative inline-block mt-1">
-                      <h2 
-                        className="text-5xl font-black leading-none lowercase" 
-                        style={{ fontFamily: 'var(--font-roboto-condensed), "Arial Narrow", Impact, sans-serif', color: colors.dark }}
-                      >
-                        {lastWord}
-                      </h2>
-                      {/* Terracotta squiggle underline */}
-                      <svg 
-                        className="absolute left-0 -bottom-1 w-full h-3" 
-                        viewBox="0 0 100 10" 
-                        preserveAspectRatio="none"
-                        style={{ opacity: 0.8 }}
-                      >
-                        <path 
-                          d="M 0 5 Q 25 2, 50 5 T 100 5" 
-                          fill="none" 
-                          stroke={terracotta} 
-                          strokeWidth="3"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                );
-              })()}
-              {overlay.subhead && (
-                <p 
-                  className="text-base leading-relaxed" 
-                  style={{ fontFamily: 'var(--font-courier-prime), "Courier New", monospace', fontWeight: 700, color: colors.text }}
-                >
-                  {overlay.subhead}
-                </p>
-              )}
-            </div>
-          )}
+          {/* DO NOT render overlay type - it's baked into the generated image */}
           
           {/* Lifestyle photo RIGHT/bottom - rounded rect, object-cover, NOT a phone */}
           {imageUrl ? (
@@ -169,7 +116,8 @@ export default function SlideCard({
           ) : (
             <div className="absolute bottom-8 right-8 top-20 w-[48%] rounded-3xl bg-gray-200 flex items-center justify-center">
               <div className="text-center text-gray-400">
-                <p className="text-sm">Drop lifestyle photo</p>
+                <p className="text-sm">Drop campaign graphic</p>
+                <p className="text-xs mt-1">Type baked in</p>
               </div>
             </div>
           )}

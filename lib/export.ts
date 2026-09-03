@@ -133,59 +133,7 @@ async function renderTemplate(
     
     ctx.globalAlpha = 1.0;
     
-    // 3. Draw stacked headline on LEFT with last word in sage + terracotta squiggle
-    if (hasOverlay && overlay && overlay.headline) {
-      const words = overlay.headline.split(/\s+/);
-      const lastWord = words[words.length - 1];
-      const otherWords = words.slice(0, -1);
-      
-      const textX = 100;
-      let textY = height * 0.35; // Vertically centered-ish
-      
-      ctx.font = `900 200px Roboto Condensed, "Arial Narrow", Impact, sans-serif`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      
-      // Other words in dark text
-      ctx.fillStyle = colors.text;
-      for (const word of otherWords) {
-        ctx.fillText(word.toLowerCase(), textX, textY);
-        textY += 200;
-      }
-      
-      // Last word in sage
-      ctx.fillStyle = colors.dark;
-      ctx.fillText(lastWord.toLowerCase(), textX, textY);
-      
-      // Draw terracotta squiggle underline
-      const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
-      ctx.strokeStyle = terracotta;
-      ctx.lineWidth = 12;
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(textX, textY + 220);
-      ctx.bezierCurveTo(
-        textX + textWidth * 0.25, textY + 210,
-        textX + textWidth * 0.5, textY + 230,
-        textX + textWidth * 0.75, textY + 220
-      );
-      ctx.bezierCurveTo(
-        textX + textWidth * 0.875, textY + 215,
-        textX + textWidth, textY + 220,
-        textX + textWidth, textY + 220
-      );
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-      
-      textY += 260;
-      
-      // Subhead in Courier Prime
-      if (overlay.subhead) {
-        ctx.font = `700 56px Courier Prime, "Courier New", monospace`;
-        ctx.fillStyle = colors.text;
-        wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
-      }
-    }
+    // 3. DO NOT draw overlay text - it's baked into the generated image
     
     // 4. Draw lifestyle photo RIGHT/bottom - rounded rect, NOT a phone
     if (img) {
