@@ -794,18 +794,32 @@ export default function LockhotDesk() {
         </div>
       </header>
 
-      {/* Campaign slide section for Growth template - at the TOP */}
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Slides</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {slides.filter(s => s.kind !== "campaign").map((slide) => (
+          <SlideCard
+            key={slide.id}
+            slide={slide}
+            currentLocale={currentLocale}
+            onToggleLock={toggleLock}
+            onFileUpload={(file) => handleFileUpload(slide.id, file)}
+            onColorChange={handleColorChange}
+          />
+        ))}
+      </div>
+
+      {/* Campaign slide section for Growth template - BELOW product slides */}
       {slides.some(s => s.templateId === "caption_top") && (() => {
         const campaignSlide = slides.find(s => s.kind === "campaign");
         if (!campaignSlide) return null;
         
         return (
-          <div className="mb-8 pb-8 border-b-2 border-gray-200">
+          <div className="mt-8 pt-8 border-t-2 border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               📸 Campaign Slide (Growth template)
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Marketing slide that appears first in your export. Drop a ChatGPT-generated lifestyle photo here after clicking Generate Campaign Photo.
+              Optional lifestyle/campaign slide, not a phone screenshot. Drop a ChatGPT-generated lifestyle photo here after clicking Generate Campaign Photo.
             </p>
             
             {!campaignSlide.imageKey && !campaignSlide.backgroundImage ? (
@@ -849,20 +863,6 @@ export default function LockhotDesk() {
           </div>
         );
       })()}
-
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Slides</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {slides.filter(s => s.kind !== "campaign").map((slide) => (
-          <SlideCard
-            key={slide.id}
-            slide={slide}
-            currentLocale={currentLocale}
-            onToggleLock={toggleLock}
-            onFileUpload={(file) => handleFileUpload(slide.id, file)}
-            onColorChange={handleColorChange}
-          />
-        ))}
-      </div>
     </div>
   );
 }
