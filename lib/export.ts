@@ -360,52 +360,49 @@ async function renderTemplate(
       }
 
       if (img) {
-        // Calculate frame position
+        // Calculate image position - use native aspect ratio
         const frameStartY = hasOverlay && overlay && overlay.headline ? 520 : 300;
         const availableHeight = height - frameStartY - 200;
-        const frameWidth = width * 0.65;
+        const maxImageWidth = width * 0.80;
         
-        // Calculate frame height based on image aspect ratio
         const imgAspect = img.width / img.height;
-        let frameHeight = frameWidth / imgAspect;
+        let imageWidth = maxImageWidth;
+        let imageHeight = imageWidth / imgAspect;
         
-        // Ensure frame fits in available space
-        if (frameHeight > availableHeight) {
-          frameHeight = availableHeight;
+        // Ensure image fits in available space
+        if (imageHeight > availableHeight) {
+          imageHeight = availableHeight;
+          imageWidth = imageHeight * imgAspect;
         }
         
-        const frameX = (width - frameWidth) / 2;
-        const frameY = frameStartY + (availableHeight - frameHeight) / 2;
-        const frameRadius = 80;
-        const borderWidth = 24;
+        const imageX = (width - imageWidth) / 2;
+        const imageY = frameStartY + (availableHeight - imageHeight) / 2;
+        const imageRadius = 80;
+        const borderWidth = 32;
 
         ctx.save();
         
-        // Lavender border/frame
-        ctx.fillStyle = "rgba(196, 181, 253, 0.25)"; // purple-300 with lower opacity
-        ctx.beginPath();
-        roundRect(ctx, frameX - borderWidth, frameY - borderWidth, frameWidth + borderWidth * 2, frameHeight + borderWidth * 2, frameRadius + borderWidth);
-        ctx.fill();
-        
-        // White inner area with shadow
-        ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
-        ctx.shadowBlur = 40;
+        // Drop shadow
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = 60;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 20;
+        ctx.shadowOffsetY = 30;
         
-        ctx.fillStyle = "#ffffff";
+        // Lavender border/mat around the image
+        ctx.strokeStyle = "rgba(196, 181, 253, 0.4)";
+        ctx.lineWidth = borderWidth;
         ctx.beginPath();
-        roundRect(ctx, frameX, frameY, frameWidth, frameHeight, frameRadius);
-        ctx.fill();
+        roundRect(ctx, imageX, imageY, imageWidth, imageHeight, imageRadius);
+        ctx.stroke();
+        
+        // Clip to rounded rect for image
+        ctx.shadowColor = "transparent";
+        ctx.beginPath();
+        roundRect(ctx, imageX, imageY, imageWidth, imageHeight, imageRadius);
         ctx.clip();
         
-        // Draw image as object-contain (fit within the white area)
-        const drawWidth = frameWidth;
-        const drawHeight = frameHeight;
-        const drawX = frameX;
-        const drawY = frameY;
-        
-        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        // Draw image at native aspect ratio
+        ctx.drawImage(img, imageX, imageY, imageWidth, imageHeight);
         ctx.restore();
       }
       break;
