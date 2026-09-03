@@ -800,7 +800,6 @@ export default function LockhotDesk() {
         </div>
       </header>
 
-<<<<<<< HEAD
       {/* Tray with horizontal scroll */}
       <div className="bg-tray rounded-[22px] p-6 shadow-[inset_0_1px_3px_rgba(25,26,28,0.08)] overflow-x-auto">
         <div className="flex gap-6" style={{ minWidth: '380px' }}>
@@ -822,35 +821,6 @@ export default function LockhotDesk() {
           {slides.some(s => s.templateId === "caption_top") && (() => {
             const campaignSlide = slides.find(s => s.kind === "campaign");
             if (!campaignSlide) return null;
-=======
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Slides</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {slides.filter(s => s.kind !== "campaign").map((slide) => (
-          <SlideCard
-            key={slide.id}
-            slide={slide}
-            currentLocale={currentLocale}
-            onToggleLock={toggleLock}
-            onFileUpload={(file) => handleFileUpload(slide.id, file)}
-            onColorChange={handleColorChange}
-          />
-        ))}
-      </div>
-
-      {/* Campaign slide section for Growth template - BELOW product slides */}
-      {slides.some(s => s.templateId === "caption_top") && (() => {
-        const campaignSlide = slides.find(s => s.kind === "campaign");
-        if (!campaignSlide) return null;
-        
-        return (
-          <div className="mt-8 pt-8 border-t-2 border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              📸 Campaign Slide (Growth template)
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Optional lifestyle/campaign slide, not a phone screenshot. Drop a ChatGPT-generated lifestyle photo here after clicking Generate Campaign Photo.
-            </p>
->>>>>>> origin/main
             
             if (!campaignSlide.imageKey && !campaignSlide.backgroundImage) {
               return (
@@ -897,7 +867,6 @@ export default function LockhotDesk() {
                   onOverlayChange={handleOverlayChange}
                 />
               </div>
-<<<<<<< HEAD
             );
           })()}
         </div>
@@ -940,12 +909,6 @@ export default function LockhotDesk() {
           </table>
         </div>
       </div>
-=======
-            )}
-          </div>
-        );
-      })()}
->>>>>>> origin/main
     </div>
   );
 }
