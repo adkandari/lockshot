@@ -18,7 +18,13 @@ export async function exportZip(slides: SlideData[], locale: Locale, projectName
     return true;
   });
 
-  for (const slide of slidesToExport) {
+  // Sort slides to match UI order: product slides first, campaign slide last
+  const sortedSlidesToExport = [
+    ...slidesToExport.filter(s => s.kind !== "campaign"),
+    ...slidesToExport.filter(s => s.kind === "campaign")
+  ];
+
+  for (const slide of sortedSlidesToExport) {
     const canvas = document.createElement("canvas");
     canvas.width = EXPORT_WIDTH;
     canvas.height = EXPORT_HEIGHT;
