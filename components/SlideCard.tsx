@@ -274,19 +274,13 @@ export default function SlideCard({
               )}
               {imageUrl && (
                 <div className="relative flex-1 flex items-center justify-center w-full min-h-0">
-                  <div className="relative w-[65%] max-h-full" style={{ aspectRatio: '9 / 19.5' }}>
-                    {/* Lavender frame/mat */}
-                    <div className="absolute inset-0 bg-purple-300/25 rounded-[2rem]" style={{ padding: '1.5cqh' }}>
-                      {/* White inner area */}
-                      <div className="w-full h-full bg-white rounded-[1.5rem] overflow-hidden shadow-lg flex items-center justify-center">
-                        <img
-                          src={imageUrl}
-                          alt={`Slide ${slide.id}`}
-                          className="max-w-full max-h-full object-contain"
-                          crossOrigin="anonymous"
-                        />
-                      </div>
-                    </div>
+                  <div className="relative w-[80%] max-h-full rounded-[2rem] overflow-hidden" style={{ border: '8px solid rgba(196, 181, 253, 0.4)' }}>
+                    <img
+                      src={imageUrl}
+                      alt={`Slide ${slide.id}`}
+                      className="w-full h-auto object-contain"
+                      crossOrigin="anonymous"
+                    />
                   </div>
                 </div>
               )}
@@ -448,7 +442,11 @@ export default function SlideCard({
               type="text"
               value={overlay.headline || ''}
               placeholder="Ask the model"
-              readOnly
+              onChange={(e) => {
+                if (onOverlayChange) {
+                  onOverlayChange(slide.id, e.target.value, overlay.subhead || '');
+                }
+              }}
               className="w-full px-2 py-1.5 text-sm text-ink bg-surface border border-line rounded-[9px]"
             />
           </div>
@@ -466,7 +464,11 @@ export default function SlideCard({
                 type="text"
                 value={overlay.subhead || ''}
                 placeholder="Ask the model"
-                readOnly
+                onChange={(e) => {
+                  if (onOverlayChange) {
+                    onOverlayChange(slide.id, overlay.headline || '', e.target.value);
+                  }
+                }}
                 className="w-full px-2 py-1.5 text-sm text-ink bg-surface border border-line rounded-[9px]"
               />
             </div>
