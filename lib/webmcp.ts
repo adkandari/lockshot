@@ -97,6 +97,9 @@ export async function registerWebMCPTools(
         const campaignSlide = currentSlides.find(s => s.kind === "campaign");
         const hasCampaign = !!campaignSlide;
         const campaignEmpty = hasCampaign && !campaignSlide.imageKey && !campaignSlide.backgroundImage;
+        const campaignOverlayEmpty = hasCampaign && campaignSlide && 
+          (!campaignSlide.overlays[locale] || 
+           (!campaignSlide.overlays[locale].headline && !campaignSlide.overlays[locale].subhead));
         
         return {
           project: project ? {
@@ -111,7 +114,11 @@ export async function registerWebMCPTools(
           campaign_slide: hasCampaign ? {
             exists: true,
             has_image: !campaignEmpty,
-            hint: campaignEmpty ? "Campaign slide exists but needs a lifestyle photo — generate one via DALL-E or similar" : undefined,
+            has_overlay: !campaignOverlayEmpty,
+            headline: campaignSlide?.overlays[locale]?.headline || '',
+            subhead: campaignSlide?.overlays[locale]?.subhead || '',
+            hint: campaignEmpty ? "Campaign slide exists but needs a lifestyle photo — generate one via DALL-E or similar" : 
+                  campaignOverlayEmpty ? "Campaign slide needs overlay text — set headline and subhead with set_overlay for slide 0" : undefined,
           } : undefined,
           slides: currentSlides.filter(s => s.kind !== "campaign").map(slide => ({
             id: slide.id,
@@ -261,13 +268,13 @@ export async function registerWebMCPTools(
     },
     {
       name: "set_overlay",
-      description: "Set headline and/or subhead for a specific slide in the current locale. Does not affect locked slides. Overflow is automatically measured.",
+      description: "Set headline and/or subhead for a specific slide in the current locale. Supports campaign slide (id=0) and product slides (id=1-5). Does not affect locked slides. Overflow is automatically measured.",
       inputSchema: {
         type: "object" as const,
         properties: {
           slide: {
             type: "number",
-            description: "Slide ID (1-5)",
+            description: "Slide ID (0 for campaign, 1-5 for product slides)",
           },
           headline: {
             type: "string",
@@ -323,10 +330,11 @@ export async function registerWebMCPTools(
           success: true,
           slideId,
           locale,
+          kind: slide.kind || 'product',
           newHeadline: newOverlay.headline,
           newSubhead: newOverlay.subhead,
           overflow,
-          diff: `Updated slide ${slideId} ${headline !== undefined ? 'headline' : ''} ${subhead !== undefined ? 'subhead' : ''}`.trim(),
+          diff: `Updated ${slide.kind === 'campaign' ? 'campaign' : 'slide'} ${slideId} ${headline !== undefined ? 'headline' : ''} ${subhead !== undefined ? 'subhead' : ''}`.trim(),
         };
       },
     },

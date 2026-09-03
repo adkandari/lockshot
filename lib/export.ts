@@ -105,25 +105,19 @@ async function renderTemplate(
 
   // Special case: Campaign slide for Growth template
   if (slideKind === "campaign") {
-    const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
+    const cream = '#F3E8DA';
+    const sage = '#707D5D';
+    const terracotta = '#D4756E';
+    const darkText = '#44392D';
     
     // 1. Fill with cream background
-    ctx.fillStyle = colors.light;
+    ctx.fillStyle = cream;
     ctx.fillRect(0, 0, width, height);
     
-    // 2. Draw organic blobs
-    ctx.globalAlpha = 0.35;
-    const blobTopRight = ctx.createRadialGradient(width * 0.85, height * 0.15, 0, width * 0.85, height * 0.15, width * 0.3);
-    blobTopRight.addColorStop(0, colors.dark);
-    blobTopRight.addColorStop(1, 'transparent');
-    ctx.fillStyle = blobTopRight;
-    ctx.beginPath();
-    ctx.arc(width * 0.85, height * 0.15, width * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.globalAlpha = 0.3;
+    // 2. Draw sage blob lower-left
+    ctx.globalAlpha = 0.4;
     const blobBottomLeft = ctx.createRadialGradient(width * 0.15, height * 0.85, 0, width * 0.15, height * 0.85, width * 0.27);
-    blobBottomLeft.addColorStop(0, colors.dark);
+    blobBottomLeft.addColorStop(0, sage);
     blobBottomLeft.addColorStop(1, 'transparent');
     ctx.fillStyle = blobBottomLeft;
     ctx.beginPath();
@@ -132,71 +126,70 @@ async function renderTemplate(
     
     ctx.globalAlpha = 1.0;
     
-    // 3. Draw stacked headline with last word in accent
+    // 3. Draw stacked headline on LEFT with last word in sage + terracotta squiggle
     if (hasOverlay && overlay && overlay.headline) {
       const words = overlay.headline.split(/\s+/);
       const lastWord = words[words.length - 1];
-      const otherWords = words.slice(0, -1).join(' ');
+      const otherWords = words.slice(0, -1);
       
       const textX = 100;
-      let textY = 120;
+      let textY = height * 0.35; // Vertically centered-ish
       
-      ctx.font = `900 130px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+      ctx.font = `900 200px "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
       
-      if (otherWords) {
-        ctx.fillStyle = colors.text;
-        wrapText(ctx, otherWords.toLowerCase(), textX, textY, width - 200, 150);
-        textY += 150;
+      // Other words in dark text
+      ctx.fillStyle = darkText;
+      for (const word of otherWords) {
+        ctx.fillText(word.toLowerCase(), textX, textY);
+        textY += 200;
       }
       
-      // Last word in accent with squiggle
-      ctx.fillStyle = colors.dark;
+      // Last word in sage
+      ctx.fillStyle = sage;
       ctx.fillText(lastWord.toLowerCase(), textX, textY);
       
-      // Draw squiggle underline
+      // Draw terracotta squiggle underline
       const textWidth = ctx.measureText(lastWord.toLowerCase()).width;
-      ctx.strokeStyle = colors.dark;
-      ctx.lineWidth = 8;
-      ctx.globalAlpha = 0.7;
+      ctx.strokeStyle = terracotta;
+      ctx.lineWidth = 12;
+      ctx.globalAlpha = 0.8;
       ctx.beginPath();
-      ctx.moveTo(textX, textY + 145);
+      ctx.moveTo(textX, textY + 220);
       ctx.bezierCurveTo(
-        textX + textWidth * 0.25, textY + 135,
-        textX + textWidth * 0.5, textY + 155,
-        textX + textWidth * 0.75, textY + 145
+        textX + textWidth * 0.25, textY + 210,
+        textX + textWidth * 0.5, textY + 230,
+        textX + textWidth * 0.75, textY + 220
       );
       ctx.bezierCurveTo(
-        textX + textWidth * 0.875, textY + 140,
-        textX + textWidth, textY + 145,
-        textX + textWidth, textY + 145
+        textX + textWidth * 0.875, textY + 215,
+        textX + textWidth, textY + 220,
+        textX + textWidth, textY + 220
       );
       ctx.stroke();
       ctx.globalAlpha = 1.0;
       
-      textY += 180;
+      textY += 260;
       
-      // Subhead
+      // Subhead in Courier Prime
       if (overlay.subhead) {
-        ctx.font = `56px Georgia, "Source Serif 4", serif`;
-        ctx.fillStyle = colors.text;
-        ctx.globalAlpha = 0.75;
-        wrapText(ctx, overlay.subhead, textX, textY, width - 200, 70);
-        ctx.globalAlpha = 1.0;
+        ctx.font = `700 56px "Courier Prime", "Courier New", monospace`;
+        ctx.fillStyle = darkText;
+        wrapText(ctx, overlay.subhead, textX, textY, width * 0.45, 70);
       }
     }
     
-    // 4. Draw lifestyle photo in rounded rect on right/bottom
+    // 4. Draw lifestyle photo RIGHT/bottom - rounded rect, NOT a phone
     if (img) {
-      const photoWidth = width * 0.5;
-      const photoHeight = height * 0.67;
-      const photoX = width - photoWidth - 80;
-      const photoY = height - photoHeight - 100;
+      const photoWidth = width * 0.48;
+      const photoHeight = height * 0.65;
+      const photoX = width - photoWidth - 100;
+      const photoY = 250; // Fixed from top
       const photoRadius = 96;
       
       ctx.save();
-      ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
       ctx.shadowBlur = 60;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 30;
@@ -204,7 +197,27 @@ async function renderTemplate(
       ctx.beginPath();
       roundRect(ctx, photoX, photoY, photoWidth, photoHeight, photoRadius);
       ctx.clip();
-      ctx.drawImage(img, photoX, photoY, photoWidth, photoHeight);
+      
+      // Draw image as object-cover (fill the rect, cropping as needed)
+      const imgAspect = img.width / img.height;
+      const rectAspect = photoWidth / photoHeight;
+      
+      let drawWidth, drawHeight, drawX, drawY;
+      if (imgAspect > rectAspect) {
+        // Image is wider - fit height
+        drawHeight = photoHeight;
+        drawWidth = drawHeight * imgAspect;
+        drawX = photoX - (drawWidth - photoWidth) / 2;
+        drawY = photoY;
+      } else {
+        // Image is taller - fit width
+        drawWidth = photoWidth;
+        drawHeight = drawWidth / imgAspect;
+        drawX = photoX;
+        drawY = photoY - (drawHeight - photoHeight) / 2;
+      }
+      
+      ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
       ctx.restore();
     }
     

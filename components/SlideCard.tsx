@@ -80,73 +80,73 @@ export default function SlideCard({
   const renderTemplate = () => {
     // Special case: Campaign slide for Growth template
     if (slide.kind === "campaign") {
-      const colors = extractedColors || { light: 'rgb(245, 242, 237)', dark: 'rgb(168, 162, 158)', text: 'rgb(68, 64, 60)' };
-      const accentColor = colors.dark;
-      const textColor = colors.text;
+      const cream = '#F3E8DA';
+      const sage = '#707D5D';
+      const terracotta = '#D4756E';
+      const darkText = '#44392D';
       
       return (
         <>
           {/* Cream canvas */}
           <div 
             className="absolute inset-0" 
-            style={{ backgroundColor: colors.light }}
+            style={{ backgroundColor: cream }}
           />
           
-          {/* Organic blobs */}
+          {/* Sage blob lower-left */}
           <div 
-            className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-35 blur-3xl"
-            style={{ backgroundColor: accentColor, transform: 'translate(25%, -25%)' }}
-          />
-          <div 
-            className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-30 blur-3xl"
-            style={{ backgroundColor: accentColor, transform: 'translate(-25%, 25%)' }}
+            className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-40 blur-3xl"
+            style={{ backgroundColor: sage, transform: 'translate(-25%, 25%)' }}
           />
           
-          {/* Stacked headline with last word in accent */}
+          {/* Type on the LEFT */}
           {hasOverlay && (
-            <div className="absolute top-10 left-0 right-0 px-8 z-20">
+            <div className="absolute top-0 left-0 bottom-0 w-1/2 flex flex-col justify-center px-8 z-20">
               {overlay.headline && (() => {
                 const words = overlay.headline.split(/\s+/);
                 const lastWord = words[words.length - 1];
-                const otherWords = words.slice(0, -1).join(' ');
+                const otherWords = words.slice(0, -1);
                 
                 return (
-                  <div className="mb-3">
-                    {otherWords && (
+                  <div className="mb-4">
+                    {otherWords.map((word, i) => (
                       <h2 
-                        className="text-3xl font-black leading-tight lowercase" 
-                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: textColor }}
+                        key={i}
+                        className="text-5xl font-black leading-none lowercase block" 
+                        style={{ fontFamily: '"Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', color: darkText }}
                       >
-                        {otherWords}
+                        {word}
                       </h2>
-                    )}
-                    <h2 
-                      className="text-3xl font-black leading-tight lowercase relative inline-block" 
-                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif', color: accentColor }}
-                    >
-                      {lastWord}
-                      {/* Simple squiggle underline */}
+                    ))}
+                    <div className="relative inline-block mt-1">
+                      <h2 
+                        className="text-5xl font-black leading-none lowercase" 
+                        style={{ fontFamily: '"Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', color: sage }}
+                      >
+                        {lastWord}
+                      </h2>
+                      {/* Terracotta squiggle underline */}
                       <svg 
-                        className="absolute left-0 -bottom-1 w-full h-2" 
-                        viewBox="0 0 100 8" 
+                        className="absolute left-0 -bottom-1 w-full h-3" 
+                        viewBox="0 0 100 10" 
                         preserveAspectRatio="none"
-                        style={{ opacity: 0.7 }}
+                        style={{ opacity: 0.8 }}
                       >
                         <path 
-                          d="M 0 4 Q 25 0, 50 4 T 100 4" 
+                          d="M 0 5 Q 25 2, 50 5 T 100 5" 
                           fill="none" 
-                          stroke={accentColor} 
-                          strokeWidth="2"
+                          stroke={terracotta} 
+                          strokeWidth="3"
                         />
                       </svg>
-                    </h2>
+                    </div>
                   </div>
                 );
               })()}
               {overlay.subhead && (
                 <p 
-                  className="text-sm leading-relaxed mt-2" 
-                  style={{ fontFamily: 'var(--font-source-serif)', color: textColor, opacity: 0.75 }}
+                  className="text-base leading-relaxed" 
+                  style={{ fontFamily: '"Courier Prime", "Courier New", monospace', fontWeight: 700, color: darkText }}
                 >
                   {overlay.subhead}
                 </p>
@@ -154,9 +154,9 @@ export default function SlideCard({
             </div>
           )}
           
-          {/* Lifestyle photo in rounded rect on right/bottom */}
+          {/* Lifestyle photo RIGHT/bottom - rounded rect, object-cover, NOT a phone */}
           {imageUrl ? (
-            <div className="absolute bottom-8 right-8 w-1/2 h-2/3 rounded-3xl overflow-hidden shadow-xl">
+            <div className="absolute bottom-8 right-8 top-20 w-[48%] rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src={imageUrl}
                 alt="Campaign lifestyle"
@@ -165,7 +165,7 @@ export default function SlideCard({
               />
             </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute bottom-8 right-8 top-20 w-[48%] rounded-3xl bg-gray-200 flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-sm">Drop lifestyle photo</p>
               </div>
