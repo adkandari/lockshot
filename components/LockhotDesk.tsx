@@ -450,10 +450,30 @@ export default function LockhotDesk() {
     const hasCampaign = slides.some(s => s.kind === "campaign");
     const campaignEmpty = hasCampaign && !slides.find(s => s.kind === "campaign")?.imageKey;
     
-    let prompt = "Use the site tools. Look at the slides and write a headline and subhead for each.";
+    let prompt = `Use the site tools. Follow these steps to write App Store marketing headlines:
+
+1. Call get_page_state to read the project name and examine each product slide (slides 1-5). Look at the screenshot content to understand what the app does.
+
+2. For each slide, infer the screen's purpose from:
+   - Visible UI text, labels, and buttons in the screenshot
+   - Screen layout and functionality shown
+   - The app's branding and name
+   - What user action or benefit this screen demonstrates
+
+3. Write a distinct headline and subhead for EACH slide that matches THAT slide's specific screen:
+   - Headline: Short, benefit-focused (e.g., "Choose Your Look", "Turn Photos Into Art", "Track Your Progress")
+   - Subhead: Explains the feature or benefit shown in this specific screen
+   - Use App Store marketing tone: clear, compelling, concise
+   - Each slide should have DIFFERENT copy that reflects what's shown in its screenshot
+
+4. CRITICAL: DO NOT use generic productivity/habit filler like "Organize Your Day", "Stay Focused", "Get More Done", "Plan Your Week", "Build Better Habits" UNLESS the screenshots are actually from a productivity or habit-tracking app. Infer the real app category from the visible UI.
+
+5. Call set_overlay for each slide (slide=1, slide=2, etc.) with the headline and subhead you wrote.
+
+6. After writing all overlays, call check_overflow. If any slides overflow, rewrite them shorter and call set_overlay again.`;
     
     if (hasGrowth && campaignEmpty) {
-      prompt += "\n\nIMPORTANT: This project uses the Campaign template with an optional campaign slide. The campaign slide needs a designed graphic with typography. You can generate one later with the 'Generate campaign photo' button, which will create a finished 9:16 marketing image with the campaign overlay text rendered into it.";
+      prompt += "\n\nNOTE: This project uses the Campaign template with an optional campaign slide (slide 0). The campaign slide needs a designed graphic with typography. You can generate one later with the 'Generate campaign photo' button, which will create a finished 9:16 marketing image with the campaign overlay text rendered into it.";
     }
     
     // Try 1: ChatGPT Apps sendFollowUpMessage
